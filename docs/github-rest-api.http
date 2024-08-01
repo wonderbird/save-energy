@@ -1,0 +1,29 @@
+### GET /emojis
+# List all emojis available to use on GitHub.
+#
+# This API call is used as a simple test for the GitHub API.
+GET https://api.github.com/emojis
+Accept: application/json
+Authorization: Bearer {{$auth.token("github")}}
+
+### GET /user/repos
+# List all repositories for the authenticated user.
+#
+# Only repositories owned by the authenticated user are listed.
+# Get 100 repositories sorted by the date of the last push.
+# The oldest repositories are listed first.
+GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=asc&per_page=100&page=1
+Accept: application/json
+Authorization: Bearer {{$auth.token("github")}}
+
+### GET /users/{{GitHub.Username}}/orgs
+# List all organizations for the specified user.
+GET https://api.github.com/users/{{GitHub.Username}}/orgs
+Accept: application/json
+Authorization: Bearer {{$auth.token("github")}}
+
+### GET /orgs/{{GitHub.Organization}}/repos
+# List all repositories for the specified organization.
+GET https://api.github.com/orgs/{{GitHub.Organization}}/repos
+Accept: application/json
+Authorization: Bearer {{$auth.token("github")}}
