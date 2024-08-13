@@ -4,7 +4,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy.Specs", "src\Sav
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy", "src\SaveEnergy\SaveEnergy.csproj", "{B432E940-1515-4417-BA73-FD4597CBC427}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy.Tests", "SaveEnergy.Tests\SaveEnergy.Tests.csproj", "{351B5DD3-4A2F-49DF-9356-301BF70800A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy.Tests", "src\SaveEnergy.Tests\SaveEnergy.Tests.csproj", "{351B5DD3-4A2F-49DF-9356-301BF70800A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
