@@ -19,7 +19,7 @@ this project in a production environment.
 
 ## Build, Test, Run
 
-### Prerequisites
+### Prerequisites: Coverlet, ReportGenerator
 
 To compile, test and run this project the latest LTS release of the [.NET SDK](https://dotnet.microsoft.com/download)
 is required on your machine.
@@ -31,7 +31,14 @@ tool:
 dotnet tool install --global coverlet.console
 ```
 
-### Build and Test the Solution
+If you would like to build HTML reports from the test coverage, install the
+[ReportGenerator](https://reportgenerator.io/) tool:
+
+```shell
+dotnet tool install --global dotnet-reportgenerator-globaltool
+```
+
+### Build, Test, Create Coverage Report
 
 Run the following commands from the folder containing the `.sln` file in order to build and test.
 
@@ -41,6 +48,22 @@ dotnet build
 
 # Run the tests once
 dotnet test
+```
+
+To create a coverage report, run the following command:
+
+```sh
+# Cleanup test results from previous runs
+rm -r ./src/SaveEnergy.Tests/TestResults ./src/SaveEnergy.Specs/TestResults
+
+# Run the tests and create a coverage report in Cobertura format
+dotnet test --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput='./TestResults/coverage.cobertura.xml'
+
+# Convert the Cobertura report to LCOV and HTML
+reportgenerator "-reports:src/SaveEnergy.Tests/TestResults/*.xml;src/SaveEnergy.Specs/TestResults/*.xml" "-targetdir:report" "-reporttypes:Html;lcov" "-title:Save Energy"
+
+# Open the HTML report in the browser
+open report/index.html
 ```
 
 ### Run the Application
