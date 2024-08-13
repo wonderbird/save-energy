@@ -1,0 +1,50 @@
+name: .NET
+
+# Save energy - only build main branch updates
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build and test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install dotnet global tools (coverlet, reportgenerator)
+        run: |
+          dotnet tool install --global coverlet.console
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Debug --no-restore
+
+      - name: Run tests
+        run: dotnet test --configuration Debug --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput='./TestResults/coverage.cobertura.xml'
+
+      - name: Generate coverage reports
+        run: reportgenerator "-reports:src/SaveEnergy.Tests/TestResults/*.xml;src/SaveEnergy.Specs/TestResults/*.xml" \
+          "-targetdir:report" \
+          "-reporttypes:Html;lcov" \
+          "-title:Save Energy" 
+
+      - name: Attach coverage reports to build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: report
+  
