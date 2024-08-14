@@ -6,10 +6,16 @@ Reduce your carbon footprint by saving energy on GitHub.
 
 Consider sustainability by saving energy for each inactive GitHub repository.
 
-- Remove trigger building the project at a regular time interval.
+- Reduce the interval for automatically rebuilding the project or entirely
+  remove regular automatic builds, e.g. for non-production code.
 - Replace the trigger on every build by a trigger on pull request to main.
-- Deactivate dependabot.
-- Download to local machine, archive it there and delete from GitHub.
+  Add a trigger to allow building manually on demand.
+- Actively avoid running a CI pipeline if no relevant change was made, see the
+  [Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs) article
+- Reduce the frequency of dependabot checks or deactivate dependabot.
+- Limit the retention duration for uploaded artifacts to the minimum.
+- If you don't work on the code any longer, then download the repository to an
+  archive on your local machine, archive it on GitHub or delete from GitHub.
 
 ## Development and Support Status
 
@@ -158,4 +164,5 @@ pmd cpd --minimum-tokens 50 --language cs --dir .
 
 ## References
 
+- [GitHub: Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)
 - [GitHub REST API](https://docs.github.com/en/rest)
