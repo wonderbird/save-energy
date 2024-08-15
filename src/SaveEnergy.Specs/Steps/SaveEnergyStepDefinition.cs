@@ -11,9 +11,36 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
 
-    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext _)
+    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext context)
     {
         _testOutputHelper = testOutputHelper;
+    }
+
+    ~SaveEnergyStepDefinition()
+    {
+        Dispose(false);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (!_isDisposed && disposing)
+        {
+            _process?.Dispose();
+        }
+
+        _isDisposed = true;
+    }
+
+    [Given(@"The application is authorized to read the user's repositories")]
+    public void GivenTheApplicationIsAuthorizedToReadTheUsersRepositories()
+    {
+        // TODO: Find out how to authorize the application to read the user's repositories
     }
 
     [When(@"I run the application")]
@@ -40,30 +67,9 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
-    [Then(@"Hello World is displayed")]
-    public void ThenHelloWorldIsDisplayed()
+    [Then(@"At least one repository URL is printed to the console")]
+    public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
     {
-        Assert.Contains("Hello, World!", _process?.RecordedOutput);
-    }
-
-    ~SaveEnergyStepDefinition()
-    {
-        Dispose(false);
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    private void Dispose(bool disposing)
-    {
-        if (!_isDisposed && disposing)
-        {
-            _process?.Dispose();
-        }
-
-        _isDisposed = true;
+        Assert.Contains("https://github.com/", _process?.RecordedOutput);
     }
 }

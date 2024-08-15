@@ -1,5 +1,12 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/Environment/Highlighting/HighlightingSourceSnapshotLocation/@EntryValue">/Users/stefan/Library/Caches/JetBrains/Rider2024.1/resharper-host/temp/Rider/vAny/CoverageData/_SaveEnergy.506521415/Snapshot/snapshot.utdcvr</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9e7fd639_002D8a8a_002D4a87_002Db932_002Dcfbb03f45c5d/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Solution /&gt;
+  &lt;Not&gt;
+    &lt;And&gt;
+      &lt;TestAncestor&gt;
+        &lt;TestId&gt;xUnit::F9DDD811-737F-48C7-80AF-EC9A782E5395::net8.0::SaveEnergy.Specs.Features.SaveEnergyFeature.ListGitHubRepositories&lt;/TestId&gt;
+      &lt;/TestAncestor&gt;
+      &lt;Category&gt;WorkInProgress&lt;/Category&gt;
+    &lt;/And&gt;
+  &lt;/Not&gt;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>

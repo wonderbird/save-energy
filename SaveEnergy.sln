@@ -6,6 +6,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy", "src\SaveEnerg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy.Tests", "src\SaveEnergy.Tests\SaveEnergy.Tests.csproj", "{351B5DD3-4A2F-49DF-9356-301BF70800A7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{F2AE172A-FC26-4286-981C-14F369B6499A}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		docs\README.md = docs\README.md
+		docs\github-rest-api.http = docs\github-rest-api.http
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{CF12EB2E-5EA2-40A2-8FD5-0CA28676B461}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
