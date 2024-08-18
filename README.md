@@ -74,9 +74,16 @@ open report/index.html
 
 ### Run the Application
 
+The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file.
+You can either run it from the `src/SaveEnergy` folder or from the build output folder.
+
 ```shell
-dotnet run --project src/SaveEnergy/SaveEnergy.csproj
+cd src/SaveEnergy; \
+dotnet run --project SaveEnergy.csproj; \
+cd ../..
 ```
+
+This makes sure that the application reads the configuration file linked in the project file.
 
 ## Relevant GitHub API Endpoints
 
