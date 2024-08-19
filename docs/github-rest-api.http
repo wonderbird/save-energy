@@ -1,3 +1,58 @@
+# *************************** OAuth2 Device Flow  ****************************
+
+# To execute the device flow manually, follow the steps described in the
+# section "Using the device flow to generate a user access token" of
+# https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app
+#
+# 1. POST /login/oauth/device/code
+# 2. The user visits the verification_uri and enters the user_code
+# 3. POST /login/oauth/access_token
+# 4. Use the access_token to authenticate API requests
+
+### POST /login/oauth/device/code
+# Request a device and user code for the OAuth2 Device Flow.
+#
+# Note: Unfortunately, I don't know how to refer to the Client ID configured in
+# Secrets.Auth.github. Thus, I am duplicating the Client ID to GitHub.ClientID.
+#
+POST https://github.com/login/device/code
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+client_id = {{GitHub.ClientID}}
+
+> {%
+    client.global.set("device_code", response.body.device_code);
+%}
+
+### POST /login/oauth/access_token
+# Request an access token for the OAuth2 Device Flow.
+POST https://github.com/login/oauth/access_token
+Content-Type: application/json
+Accept: application/json
+
+{
+  "client_id": "{{GitHub.ClientID}}",
+  "device_code": "{{device_code}}",
+  "grant_type": "urn:ietf:params:oauth:grant-type:device_code"
+}
+
+> {%
+    client.global.set("access_token", response.body.access_token);
+    client.global.set("refresh_token", response.body.refresh_token);
+%}
+
+### GET /user/repos
+# List all repositories for the authenticated user.
+#
+# Only repositories owned by the authenticated user are listed.
+# Get the 1 repository which has been pushed to most recently.
+GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=1&page=1
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+# ************************* Authorization Required  **************************
+
 ### GET /emojis
 # List all emojis available to use on GitHub.
 #

@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{F2AE172A-F
 		README.md = README.md
 		docs\README.md = docs\README.md
 		docs\github-rest-api.http = docs\github-rest-api.http
+		docs\http-client.env.json = docs\http-client.env.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{CF12EB2E-5EA2-40A2-8FD5-0CA28676B461}"
