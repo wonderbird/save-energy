@@ -74,16 +74,25 @@ open report/index.html
 
 ### Run the Application
 
+#### Prerequisite: Configure GitHub Client Id
+
+This application uses the GitHub API to retrieve information about repositories. You need to configure this mechanism of authentication as described in the [Authentication Setup](./docs/authentication-setup.md) file.
+
+#### Run the Application
+
 The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file.
 You can either run it from the `src/SaveEnergy` folder or from the build output folder.
 
 ```shell
 cd src/SaveEnergy; \
-dotnet run --project SaveEnergy.csproj; \
+DOTNET_ENVIRONMENT=Development dotnet run --project SaveEnergy.csproj; \
 cd ../..
 ```
 
-This makes sure that the application reads the configuration file linked in the project file.
+Running from inside the `src/SaveEnergy` directory makes sure that the application reads the configuration file linked
+in the project file.
+
+The `DOTNET_ENVIRONMENT=Development` parameter is required for the application to receive the user secrets.
 
 ## Relevant GitHub API Endpoints
 
@@ -171,5 +180,5 @@ pmd cpd --minimum-tokens 50 --language cs --dir .
 
 ## References
 
-- [GitHub: Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)
 - [GitHub REST API](https://docs.github.com/en/rest)
+- [GitHub: Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)
