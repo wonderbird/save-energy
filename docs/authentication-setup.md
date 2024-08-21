@@ -2,12 +2,16 @@
 
 Detailed background information is linked at the bottom of this document.
 
+## Register GitHub App
+
 Because the application authenticates with the GitHub API as a GitHub App, you need to create a corresponding GitHub
 App in the [developer settings of your GitHub account](https://github.com/settings/apps/). This screenshot shows the detailed configuration:
 
 ![GitHub App Settings](./github-app-settings.png)
 
 At the moment, the application does not require any permissions.
+
+## Configure Client Id as .NET User Secret
 
 To authenticate with the GitHub API, the application receives the **Client Id** from the `dotnet user-secrets`
 configuration helper.
@@ -23,6 +27,11 @@ cd ../..
 `dotnet user-secrets` will store the Client Id in
 `~/.microsoft/usersecrets/5423f1ff-336c-429f-9498-7700b2de9ebb/secrets.json`. The GUID is taken from
 [SaveEnergy.csproj](./src/SaveEnergy/SaveEnergy.csproj).
+
+## Configure OAuth2 Device Flow in JetBrains HTTP Client
+
+If you would like to run the HTTP requests from [github-rest-api.http](./github-rest-api.http), then configure
+the HTTP client as described in this [README.md](./README.md).
 
 ## References and Detailed Information
 
