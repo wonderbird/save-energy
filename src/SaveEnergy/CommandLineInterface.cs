@@ -80,17 +80,21 @@ public class CommandLineInterface : IHostedService
         tracingClient.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
         tracingClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResponse.AccessToken);
 
-        using var undecodedRepositoriesResponse = await tracingClient.GetAsync("https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=1&page=1");
+        using var undecodedRepositoriesResponse = await tracingClient.GetAsync("https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
         
         _logger.LogDebug("Final request URI: {RequestUri}", undecodedRepositoriesResponse.RequestMessage.RequestUri);
         
         undecodedRepositoriesResponse.EnsureSuccessStatusCode();
         
         var repositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<RepositoryResponse>>();
+        Console.WriteLine($"| Repository name | URL |");
+        Console.WriteLine($"| --- | --- |");
         foreach (var repository in repositories)
         {
-            _logger.LogInformation("Repository: {Repository}", repository);
+            Console.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
         }
+        
+        // TODO: Consider paging when processing the GitHub API response
         
         _appLifetime.StopApplication();
     }
