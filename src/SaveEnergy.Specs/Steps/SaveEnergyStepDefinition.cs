@@ -1,4 +1,5 @@
-﻿using TestProcessWrapper;
+﻿using SaveEnergy.Specs.Hooks;
+using TestProcessWrapper;
 using Xunit;
 using Xunit.Sdk;
 
@@ -8,12 +9,14 @@ namespace SaveEnergy.Specs.Steps;
 public sealed class SaveEnergyStepDefinition : IDisposable
 {
     private readonly TestOutputHelper _testOutputHelper;
+    private readonly MockServer _mockServer;
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
 
-    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext context)
+    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext context, MockServer mockServer)
     {
         _testOutputHelper = testOutputHelper;
+        _mockServer = mockServer;
     }
 
     ~SaveEnergyStepDefinition()
@@ -37,12 +40,12 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _isDisposed = true;
     }
 
-    [Given(@"The application is authorized to read the user's repositories")]
-    public void GivenTheApplicationIsAuthorizedToReadTheUsersRepositories()
+    [Given(@"device flow is enabled for the GitHub app")]
+    public void GivenDeviceFlowIsEnabledForTheGitHubApp()
     {
-        // TODO: Find out how to authorize the application to read the user's repositories
+        _mockServer.ConfigureSuccessfulDeviceAuthorization();
     }
-
+    
     [When(@"I run the application")]
     public void WhenIRunTheApplication()
     {
@@ -57,6 +60,9 @@ public sealed class SaveEnergyStepDefinition : IDisposable
             buildConfiguration
         );
         _process.TestOutputHelper = _testOutputHelper;
+        
+        _process.AddEnvironmentVariable("GitHub__AuthenticationBaseAddress", _mockServer.Url);
+        _process.AddEnvironmentVariable("GitHub__ApiBaseAddress", _mockServer.Url);
 
         _process.Start();
         _process.WaitForProcessExit();
@@ -67,9 +73,15 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
-    [Then(@"At least one repository URL is printed to the console")]
+    [Then(@"at least one repository URL is printed to the console")]
     public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
     {
         Assert.Contains("https://github.com/", _process?.RecordedOutput);
+    }
+
+    [Then(@"it performs the device authorization flow")]
+    public void ThenItPerformsTheDeviceAuthorizationFlow()
+    {
+        _mockServer.VerifyDeviceAuthorizationFlow();
     }
 }

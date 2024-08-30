@@ -1,9 +1,9 @@
 Feature: Save Energy
 
-Reconfigure GitHub actions for your projects to save energy.
-
-@WorkInProgress
-Scenario: List GitHub repositories
-	Given The application is authorized to read the user's repositories
-	When I run the application
-	Then At least one repository URL is printed to the console
+	Reconfigure GitHub actions for your projects to save energy.
+	
+	@NonParallelizable
+	Scenario: List GitHub repositories
+		Given device flow is enabled for the GitHub app
+		When I run the application
+		Then at least one repository URL is printed to the console
