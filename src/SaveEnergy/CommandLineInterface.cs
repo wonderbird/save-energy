@@ -34,13 +34,13 @@ public class CommandLineInterface : IHostedService
 
     private async void ProcessCommand()
     {
-        var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Add("Accept", "application/json");
-        client.BaseAddress = new Uri(_configuration["GitHub:AuthenticationBaseAddress"]?? "https://github.com");
-        _logger.LogDebug("Authentication base address: {AuthenticationBaseAddress}", client.BaseAddress);
+        var authenticationClient = _httpClientFactory.CreateClient();
+        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        authenticationClient.BaseAddress = new Uri(_configuration["GitHub:AuthenticationBaseAddress"]?? "https://github.com");
+        _logger.LogDebug("Authentication base address: {AuthenticationBaseAddress}", authenticationClient.BaseAddress);
         
         var clientId = _configuration["GitHub:ClientId"];
-        using var undecodedDeviceCodeResponse = await client.PostAsJsonAsync("/login/device/code", new
+        using var undecodedDeviceCodeResponse = await authenticationClient.PostAsJsonAsync("/login/device/code", new
         {
             client_id = clientId,
         });
@@ -49,7 +49,7 @@ public class CommandLineInterface : IHostedService
         var deviceCodeResponse = await undecodedDeviceCodeResponse.Content.ReadFromJsonAsync<DeviceCodeResponse>();
         _logger.LogDebug("Device code: {DeviceCodeResponse}", deviceCodeResponse);
 
-        Console.WriteLine("Please visit {0} and enter the code {1} to authenticate this application.", deviceCodeResponse.VerificationUri, deviceCodeResponse.UserCode);
+        Console.WriteLine("Please visit {0} and enter the code \"{1}\" to authenticate this application.", deviceCodeResponse.VerificationUri, deviceCodeResponse.UserCode);
 
         var secondsPassed = Stopwatch.StartNew();
         var accessTokenResponse = new AccessTokenResponse();
@@ -58,7 +58,7 @@ public class CommandLineInterface : IHostedService
             Thread.Sleep(deviceCodeResponse.Interval * 1000);
             _logger.LogDebug("Checking for authentication success for another {0} minutes ...", (deviceCodeResponse.ExpiresIn - secondsPassed.Elapsed.TotalSeconds) / 60);
             
-            using var undecodedAccessTokenResponse = await client.PostAsJsonAsync("/login/oauth/access_token", new
+            using var undecodedAccessTokenResponse = await authenticationClient.PostAsJsonAsync("/login/oauth/access_token", new
             {
                 client_id = clientId,
                 device_code = deviceCodeResponse.DeviceCode,
@@ -77,14 +77,14 @@ public class CommandLineInterface : IHostedService
         // GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=1&page=1
         // Accept: application/json
         // Authorization: Bearer {{access_token}}
-        var tracingClient = _httpClientFactory.CreateClient("TracingClient");
-        tracingClient.DefaultRequestHeaders.Add("Accept", "application/json");
-        tracingClient.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
-        tracingClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResponse.AccessToken);
-        tracingClient.BaseAddress = new Uri(_configuration["GitHub:ApiBaseAddress"]?? "https://api.github.com");
-        _logger.LogDebug("API base address: {ApiBaseAddress}", tracingClient.BaseAddress);
+        var repositoryReadingClient = _httpClientFactory.CreateClient();
+        repositoryReadingClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        repositoryReadingClient.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
+        repositoryReadingClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessTokenResponse.AccessToken);
+        repositoryReadingClient.BaseAddress = new Uri(_configuration["GitHub:ApiBaseAddress"]?? "https://api.github.com");
+        _logger.LogDebug("API base address: {ApiBaseAddress}", repositoryReadingClient.BaseAddress);
 
-        using var undecodedRepositoriesResponse = await tracingClient.GetAsync("/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
+        using var undecodedRepositoriesResponse = await repositoryReadingClient.GetAsync("/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
         
         _logger.LogDebug("Final request URI: {RequestUri}", undecodedRepositoriesResponse.RequestMessage.RequestUri);
         
