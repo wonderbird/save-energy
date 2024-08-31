@@ -56,7 +56,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
 #endif
         _process = new TestProcessWrapper.TestProcessWrapper(
             "SaveEnergy",
-            true,
+            false,
             buildConfiguration
         );
         _process.TestOutputHelper = _testOutputHelper;
