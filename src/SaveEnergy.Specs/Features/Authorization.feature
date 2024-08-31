@@ -1,13 +1,12 @@
-Feature: Authorize the application to use the GitHub API
+Feature: Authorize the application to read information about repositories owned by the user
 
-    The application needs the users' permission to read all repositories owned by them.
-    Technically this requires that the users authorize the application to read information
-    about their repositories. The application uses the device authorization flow for
-    this purpose.
+    The application must request permission to read all repositories owned by the user.
+    
+    This requirement is fulfilled by implementing the OAuth 2.0 device flow.
     
     Details are described in the section "Device flow" at
     https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
-    
+
     @NonParallelizable
     Scenario: Successful Device Flow Authorization
         Given device flow is enabled for the GitHub app

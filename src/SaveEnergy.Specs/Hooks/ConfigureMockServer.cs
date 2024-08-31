@@ -8,7 +8,9 @@ public class ConfigureMockServer
     [BeforeTestRun]
     public static void Start(MockServer mockServer)
     {
-        // TODO: Check if multiple mock servers can be started in parallel. If so, we can remove the NonParallelizable attribute from the feature files and from the configuration.
+        // TODO: Check if multiple mock servers can be started in parallel.
+        // If so, we can remove the NonParallelizable attribute from the feature files and from the configuration
+        // and remove the parallelizeTestCollections flag from the xunit.runner.json file.
         mockServer.Start();
     }
     

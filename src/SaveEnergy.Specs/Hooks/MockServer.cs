@@ -1,4 +1,5 @@
 using FluentAssertions;
+using SaveEnergy.Specs.Steps;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
@@ -58,8 +59,17 @@ public class MockServer
                     token_type = "bearer",
                     scope = "",
                 }));
+    }
 
-        // Return single repository for request to /user/repos
+    public void ConfigureRepositories(IEnumerable<Repository> repositories)
+    {
+        var repositoriesJson = repositories.Select(x =>
+            new
+            {
+                name = x.Name,
+                html_url = x.Url,
+            }).ToArray();
+        
         _mockServer?
             .Given(Request.Create()
                 .WithPath("/user/repos")
@@ -67,31 +77,18 @@ public class MockServer
             .RespondWith(Response.Create()
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(new[]
-                {
-                    new
-                    {
-                        name = "mockserver_repository_name",
-                        html_url = "https://github.com/mockserver_repository",
-                    },
-                }));
+                .WithBodyAsJson(repositoriesJson));
     }
 
     public void VerifyDeviceAuthorizationFlow()
     {
         var receivedCalls = _mockServer?.LogEntries.Select(x =>
-        new {
-            x.RequestMessage.Method,
-            x.RequestMessage.Path
-        }).ToList();
+            $"{x.RequestMessage.Method} {x.RequestMessage.Path}").ToList() ?? [];
         
         receivedCalls.Should().HaveCount(3);
         
-        receivedCalls![0].Should().Be(new { Method = "POST", Path = "/login/device/code" });
-        
-        receivedCalls![1].Should().Be(new { Method = "POST", Path = "/login/oauth/access_token" });
-        
-        receivedCalls[2].Method.Should().Be("GET");
-        receivedCalls[2].Path.Should().StartWith("/user/repos");
+        receivedCalls[0].Should().Be("POST /login/device/code");
+        receivedCalls[1].Should().Be("POST /login/oauth/access_token");
+        receivedCalls[2].Should().StartWith("GET /user/repos");
     }
 }
