@@ -1,4 +1,5 @@
 using FluentAssertions;
+using SaveEnergy.Domain;
 using SaveEnergy.Specs.Steps;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -63,11 +64,12 @@ public class MockServer
 
     public void ConfigureRepositories(IEnumerable<Repository> repositories)
     {
+        // TODO: Can the Json be generated more elegantly from the repositories? They already have json properties.
         var repositoriesJson = repositories.Select(x =>
             new
             {
                 name = x.Name,
-                html_url = x.Url,
+                html_url = x.HtmlUrl,
             }).ToArray();
         
         _mockServer?

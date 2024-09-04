@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using SaveEnergy.Domain;
 using SaveEnergy.Specs.Hooks;
 using TestProcessWrapper;
 using Xunit;
@@ -58,7 +59,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     public void GivenTheUserOwnsARepository()
     {
         _mockServer.ConfigureRepositories(new List<Repository>
-            { new("SaveEnergy", "https://github.com/wonderbird/save-energy") });
+            { new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" } });
     }
 
     [When(@"I run the application")]

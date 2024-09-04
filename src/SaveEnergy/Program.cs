@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SaveEnergy;
+using SaveEnergy.Adapters.Inbound;
+using SaveEnergy.Adapters.Outbound;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,6 +14,9 @@ var builder = Host.CreateApplicationBuilder(args);
 // IHttpClientFactory.CreateClient method.
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient("TracingClient");
+
+builder.Services.AddTransient<ICanAuthenticate, DeviceFlowAuthenticator>();
+builder.Services.AddTransient<RepositoriesQuery>();
 
 builder.Services.AddHostedService<CommandLineInterface>();
 
