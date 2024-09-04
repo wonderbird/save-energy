@@ -4,7 +4,6 @@ Feature: Save Energy
     I want to list the number of days since the last commit for each of my repositories
     so that I can see which repositories are active and which are not.
 
-    @NonParallelizable
     Scenario: List GitHub repositories
         Given device flow is enabled for the GitHub app
         And the user owns the following repositories
