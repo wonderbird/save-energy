@@ -11,10 +11,15 @@ public class MockServer
 {
     private WireMockServer? _mockServer;
     public string Url => _mockServer?.Urls[0] ?? "Error: WireMockServer has no URL";
-    
+
     public void Start()
     {
         _mockServer = WireMockServer.Start();
+    }
+
+    public void Reset()
+    {
+        _mockServer?.Reset();
     }
 
     public void Stop()

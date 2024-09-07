@@ -7,6 +7,7 @@ Feature: Authorize the application to read information about repositories owned 
     Details are described in the section "Device flow" at
     https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
 
+    @NonParallelizable
     Scenario: Successful Device Flow Authorization
         Given device flow is enabled for the GitHub app
         When I run the application
