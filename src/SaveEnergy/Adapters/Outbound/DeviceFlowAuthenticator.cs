@@ -79,17 +79,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
             _logger.LogDebug("Checking for authentication success for another {0} minutes ...",
                 (deviceCodeResponse.ExpiresIn - secondsPassed.Elapsed.TotalSeconds) / 60);
 
-            using var undecodedAccessTokenResponse = await _authenticationClient.PostAsJsonAsync(
-                "/login/oauth/access_token", new
-                {
-                    client_id = _configuration["GitHub:ClientId"],
-                    device_code = deviceCodeResponse.DeviceCode,
-                    grant_type = "urn:ietf:params:oauth:grant-type:device_code",
-                });
-            undecodedAccessTokenResponse.EnsureSuccessStatusCode();
-
-            accessTokenResponse = await undecodedAccessTokenResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
-            _logger.LogDebug("Access token: {AccessTokenResponse}", accessTokenResponse);
+            accessTokenResponse = await RequestAccessToken(deviceCodeResponse);
         }
 
         secondsPassed.Stop();
@@ -98,7 +88,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private async Task<DeviceCodeResponse> RequestDeviceCode()
     {
-        var deviceCodeResponse = await PostJsonAsync("/login/device/code", new
+        var deviceCodeResponse = await PostJsonAsync<DeviceCodeResponse>("/login/device/code", new
         {
             client_id = _configuration["GitHub:ClientId"],
         });
@@ -108,14 +98,28 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         return deviceCodeResponse;
     }
 
-    private async Task<DeviceCodeResponse> PostJsonAsync(string requestUri, object value)
+    private async Task<AccessTokenResponse> RequestAccessToken(DeviceCodeResponse deviceCodeResponse)
     {
-        using var undecodedDeviceCodeResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
-        
-        undecodedDeviceCodeResponse.EnsureSuccessStatusCode();
+        var accessTokenResponse = await PostJsonAsync<AccessTokenResponse>("/login/oauth/access_token", new
+            {
+                client_id = _configuration["GitHub:ClientId"],
+                device_code = deviceCodeResponse.DeviceCode,
+                grant_type = "urn:ietf:params:oauth:grant-type:device_code",
+            });
 
-        var deviceCodeResponse = await undecodedDeviceCodeResponse.Content.ReadFromJsonAsync<DeviceCodeResponse>();
-        return deviceCodeResponse;
+        _logger.LogDebug("Access token: {AccessTokenResponse}", accessTokenResponse);
+
+        return accessTokenResponse;
+    }
+
+    private async Task<TResult> PostJsonAsync<TResult>(string requestUri, object value)
+    {
+        using var undecodedResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+        
+        undecodedResponse.EnsureSuccessStatusCode();
+
+        var response = await undecodedResponse.Content.ReadFromJsonAsync<TResult>();
+        return response;
     }
 
     private HttpClient CreateAuthenticationClient()
