@@ -70,7 +70,15 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         Console.WriteLine("Please visit {0} and enter the code \"{1}\" to authenticate this application.",
             deviceCodeResponse.VerificationUri, deviceCodeResponse.UserCode);
 
+        var accessTokenResponse = await WaitUntilAccessGranted(deviceCodeResponse);
+        
+        return new AccessToken(accessTokenResponse.AccessToken);
+    }
+
+    private async Task<AccessTokenResponse> WaitUntilAccessGranted(DeviceCodeResponse deviceCodeResponse)
+    {
         var secondsPassed = Stopwatch.StartNew();
+        
         var accessTokenResponse = new AccessTokenResponse();
         while (secondsPassed.Elapsed.TotalSeconds < deviceCodeResponse.ExpiresIn &&
                string.IsNullOrEmpty(accessTokenResponse.AccessToken))
@@ -83,7 +91,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         }
 
         secondsPassed.Stop();
-        return new AccessToken(accessTokenResponse.AccessToken);
+        return accessTokenResponse;
     }
 
     private async Task<DeviceCodeResponse> RequestDeviceCode()
