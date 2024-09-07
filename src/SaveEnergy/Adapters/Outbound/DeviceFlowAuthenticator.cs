@@ -9,7 +9,7 @@ namespace SaveEnergy.Adapters.Outbound;
 
 internal class DeviceFlowAuthenticator : ICanAuthenticate
 {
-    private HttpClient _authenticationClient;
+    private readonly HttpClient _authenticationClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DeviceFlowAuthenticator> _logger;
@@ -28,17 +28,18 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     private HttpClient CreateAuthenticationClient()
     {
         var authenticationClient = _httpClientFactory.CreateClient();
+        
         authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
         authenticationClient.BaseAddress =
             new Uri(_configuration["GitHub:AuthenticationBaseAddress"] ?? "https://github.com");
+        
         _logger.LogDebug("Authentication base address: {AuthenticationBaseAddress}", authenticationClient.BaseAddress);
+        
         return authenticationClient;
     }
 
     public async Task<AccessToken> RequestAccessToken()
     {
-        _authenticationClient = CreateAuthenticationClient();
-
         var deviceCodeResponse = await RequestDeviceCode();
 
         Console.WriteLine("Please visit {0} and enter the code \"{1}\" to authenticate this application.",
@@ -63,12 +64,11 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private async Task<TResult> PostJsonAsync<TResult>(string requestUri, object value)
     {
-        using var undecodedResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+        using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
         
-        undecodedResponse.EnsureSuccessStatusCode();
+        httpResponse.EnsureSuccessStatusCode();
 
-        var response = await undecodedResponse.Content.ReadFromJsonAsync<TResult>();
-        return response;
+        return await httpResponse.Content.ReadFromJsonAsync<TResult>();
     }
 
     private async Task<AccessTokenResponse> WaitUntilAccessGranted(DeviceCodeResponse deviceCodeResponse)
