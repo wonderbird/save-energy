@@ -44,6 +44,27 @@ If you would like to build HTML reports from the test coverage, install the
 dotnet tool install --global dotnet-reportgenerator-globaltool
 ```
 
+### Important: To Calculate Coverage, BDD Tests Must Run Sequentially
+
+#### Coverlet Instrumentation Manipulates the Dotnet Assembly Under Test
+
+Because each scenario runs the dotnet application with coverlet instrumentation, the tests must run sequentially.
+
+The reason is that coverlet instruments the dotnet assembly under test for each single test individually.
+
+Running tests in parallel would lead to a resource conflict and the tests would fail.
+
+#### During Development BDD Tests Can Run in Parallel
+
+If you do not need coverage reports, you can run the BDD tests in parallel:
+
+```shell
+dotnet test --no-restore --verbosity normal --parallel=true
+# can we leave out the "=true" part?
+
+TODO: Implement a mechanism to enable / disable coverage on demand. See TODO in `EnableCoverageMeasurement.cs`
+```
+
 ### Build, Test, Create Coverage Report
 
 Run the following commands from the folder containing the `.sln` file in order to build and test.
