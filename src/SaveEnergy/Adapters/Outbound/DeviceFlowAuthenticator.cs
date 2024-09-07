@@ -7,11 +7,7 @@ using SaveEnergy.Domain;
 
 namespace SaveEnergy.Adapters.Outbound;
 
-internal class DeviceFlowAuthenticator(
-    IHttpClientFactory httpClientFactory,
-    IConfiguration configuration,
-    ILogger<DeviceFlowAuthenticator> logger)
-    : ICanAuthenticate
+internal class DeviceFlowAuthenticator : ICanAuthenticate
 {
     private readonly record struct DeviceCodeResponse
     {
@@ -30,7 +26,7 @@ internal class DeviceFlowAuthenticator(
         [JsonPropertyName("interval")]
         public int Interval { get; init; }
     }
-    
+
     private readonly record struct AccessTokenResponse
     {
         [JsonPropertyName("access_token")]
@@ -48,24 +44,28 @@ internal class DeviceFlowAuthenticator(
         [JsonPropertyName("scope")]
         public string Scope { get; init; }
     }
-    
+
+    private HttpClient _authenticationClient;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<DeviceFlowAuthenticator> _logger;
+
+    public DeviceFlowAuthenticator(IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ILogger<DeviceFlowAuthenticator> logger)
+    {
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _logger = logger;
+        
+        _authenticationClient = CreateAuthenticationClient();
+    }
+
     public async Task<AccessToken> RequestAccessToken()
     {
-        var authenticationClient = httpClientFactory.CreateClient();
-        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
-        authenticationClient.BaseAddress =
-            new Uri(configuration["GitHub:AuthenticationBaseAddress"] ?? "https://github.com");
-        logger.LogDebug("Authentication base address: {AuthenticationBaseAddress}", authenticationClient.BaseAddress);
+        _authenticationClient = CreateAuthenticationClient();
 
-        var clientId = configuration["GitHub:ClientId"];
-        using var undecodedDeviceCodeResponse = await authenticationClient.PostAsJsonAsync("/login/device/code", new
-        {
-            client_id = clientId,
-        });
-        undecodedDeviceCodeResponse.EnsureSuccessStatusCode();
-
-        var deviceCodeResponse = await undecodedDeviceCodeResponse.Content.ReadFromJsonAsync<DeviceCodeResponse>();
-        logger.LogDebug("Device code: {DeviceCodeResponse}", deviceCodeResponse);
+        var deviceCodeResponse = await RequestDeviceCode();
 
         Console.WriteLine("Please visit {0} and enter the code \"{1}\" to authenticate this application.",
             deviceCodeResponse.VerificationUri, deviceCodeResponse.UserCode);
@@ -76,23 +76,55 @@ internal class DeviceFlowAuthenticator(
                string.IsNullOrEmpty(accessTokenResponse.AccessToken))
         {
             Thread.Sleep(deviceCodeResponse.Interval * 1000);
-            logger.LogDebug("Checking for authentication success for another {0} minutes ...",
+            _logger.LogDebug("Checking for authentication success for another {0} minutes ...",
                 (deviceCodeResponse.ExpiresIn - secondsPassed.Elapsed.TotalSeconds) / 60);
 
-            using var undecodedAccessTokenResponse = await authenticationClient.PostAsJsonAsync(
+            using var undecodedAccessTokenResponse = await _authenticationClient.PostAsJsonAsync(
                 "/login/oauth/access_token", new
                 {
-                    client_id = clientId,
+                    client_id = _configuration["GitHub:ClientId"],
                     device_code = deviceCodeResponse.DeviceCode,
                     grant_type = "urn:ietf:params:oauth:grant-type:device_code",
                 });
             undecodedAccessTokenResponse.EnsureSuccessStatusCode();
 
             accessTokenResponse = await undecodedAccessTokenResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
-            logger.LogDebug("Access token: {AccessTokenResponse}", accessTokenResponse);
+            _logger.LogDebug("Access token: {AccessTokenResponse}", accessTokenResponse);
         }
 
         secondsPassed.Stop();
         return new AccessToken(accessTokenResponse.AccessToken);
+    }
+
+    private async Task<DeviceCodeResponse> RequestDeviceCode()
+    {
+        var deviceCodeResponse = await PostJsonAsync("/login/device/code", new
+        {
+            client_id = _configuration["GitHub:ClientId"],
+        });
+        
+        _logger.LogDebug("Device code: {DeviceCodeResponse}", deviceCodeResponse);
+        
+        return deviceCodeResponse;
+    }
+
+    private async Task<DeviceCodeResponse> PostJsonAsync(string requestUri, object value)
+    {
+        using var undecodedDeviceCodeResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+        
+        undecodedDeviceCodeResponse.EnsureSuccessStatusCode();
+
+        var deviceCodeResponse = await undecodedDeviceCodeResponse.Content.ReadFromJsonAsync<DeviceCodeResponse>();
+        return deviceCodeResponse;
+    }
+
+    private HttpClient CreateAuthenticationClient()
+    {
+        var authenticationClient = _httpClientFactory.CreateClient();
+        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        authenticationClient.BaseAddress =
+            new Uri(_configuration["GitHub:AuthenticationBaseAddress"] ?? "https://github.com");
+        _logger.LogDebug("Authentication base address: {AuthenticationBaseAddress}", authenticationClient.BaseAddress);
+        return authenticationClient;
     }
 }
