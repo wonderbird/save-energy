@@ -9,6 +9,15 @@ namespace SaveEnergy.Adapters.Outbound;
 
 internal class DeviceFlowAuthenticator : ICanAuthenticate
 {
+    // Using a hard-coded URI makes the program easier to use.
+    //
+    // Without a default URI, the program would show an error and stop if the
+    // user hasn't set one. The user would then need to set the GitHub URL and
+    // restart the program.
+#pragma warning disable S1075
+    private const string DefaultAuthenticationUri = "https://github.com";
+#pragma warning restore S1075
+
     private readonly HttpClient _authenticationClient;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -33,7 +42,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
         authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
         authenticationClient.BaseAddress = new Uri(
-            _configuration["GitHub:AuthenticationBaseAddress"] ?? "https://github.com"
+            _configuration["GitHub:AuthenticationBaseAddress"] ?? DefaultAuthenticationUri
         );
 
         _logger.LogDebug(
