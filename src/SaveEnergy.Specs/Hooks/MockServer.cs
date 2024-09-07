@@ -16,12 +16,7 @@ public class MockServer
     {
         _mockServer = WireMockServer.Start();
     }
-
-    public void Reset()
-    {
-        _mockServer?.Reset();
-    }
-
+    
     public void Stop()
     {
         _mockServer?.Stop();

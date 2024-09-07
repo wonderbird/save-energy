@@ -5,23 +5,14 @@ namespace SaveEnergy.Specs.Hooks;
 [Binding]
 public class ConfigureMockServer
 {
-    [BeforeTestRun]
-    public static void Start(MockServer mockServer)
-    {
-        // TODO: Check if multiple mock servers can be started in parallel.
-        // If so, we can remove the NonParallelizable attribute from the feature files and from the configuration
-        // and remove the parallelizeTestCollections flag from the xunit.runner.json file.
-        mockServer.Start();
-    }
-    
     [BeforeScenario]
-    public void Reset(MockServer mockServer, ITestOutputHelper testOutputHelper)
+    public void Start(MockServer mockServer, ITestOutputHelper testOutputHelper)
     {
-        mockServer.Reset();
+        mockServer.Start();
         testOutputHelper.WriteLine($"Mock server is listening on {mockServer.Url}");
     }
-    
-    [AfterTestRun]
+
+    [AfterScenario]
     public static void Stop(MockServer mockServer)
     {
         mockServer.Stop();
