@@ -15,7 +15,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     // user hasn't set one. The user would then need to set the GitHub URL and
     // restart the program.
 #pragma warning disable S1075
-    private const string DefaultAuthenticationUri = "https://github.com";
+    private const string DefaultAuthenticationBaseAddress = "https://github.com";
 #pragma warning restore S1075
 
     private readonly HttpClient _authenticationClient;
@@ -40,10 +40,11 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     {
         var authenticationClient = _httpClientFactory.CreateClient();
 
-        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
         authenticationClient.BaseAddress = new Uri(
-            _configuration["GitHub:AuthenticationBaseAddress"] ?? DefaultAuthenticationUri
+            _configuration["GitHub:AuthenticationBaseAddress"] ?? DefaultAuthenticationBaseAddress
         );
+        
+        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
         _logger.LogDebug(
             "Authentication base address: {AuthenticationBaseAddress}",
@@ -72,7 +73,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     {
         var deviceCodeResponse = await PostJsonAsync<DeviceCodeResponse>(
             "/login/device/code",
-            new { client_id = _configuration["GitHub:ClientId"], }
+            new { client_id = _configuration["GitHub:ClientId"] }
         );
 
         _logger.LogDebug("Device code: {DeviceCodeResponse}", deviceCodeResponse);
