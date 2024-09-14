@@ -77,6 +77,15 @@ public class MockServer
                 .WithBodyAsJson(repositoriesJson));
     }
 
+    public void ConfigureInternalServerError()
+    {
+        _mockServer?
+            .Given(Request.Create()
+                .UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(500));
+    }
+
     public void VerifyDeviceAuthorizationFlow()
     {
         var receivedCalls = _mockServer?.LogEntries.Select(x =>

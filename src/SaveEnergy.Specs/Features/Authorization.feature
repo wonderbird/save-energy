@@ -12,3 +12,9 @@ Feature: Authorize the application to read information about repositories owned 
         Given device flow is enabled for the GitHub app
         When I run the application
         Then it performs the device authorization flow
+
+    @NonParallelizable
+    Scenario: GitHub API returns an internal error
+        Given the GitHub API returns internal errors
+        When I run the application
+        Then it reports the error to the user

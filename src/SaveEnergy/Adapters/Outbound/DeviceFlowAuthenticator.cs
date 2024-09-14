@@ -83,11 +83,27 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private async Task<TResult> PostJsonAsync<TResult>(string requestUri, object value)
     {
-        using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+        try
+        {
+            using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+            
+            _logger.LogDebug("Response from {RequestUri}: {DeviceCodeResponse}", requestUri, httpResponse);
 
-        httpResponse.EnsureSuccessStatusCode();
+            httpResponse.EnsureSuccessStatusCode();
 
-        return await httpResponse.Content.ReadFromJsonAsync<TResult>();
+            var result = await httpResponse.Content.ReadFromJsonAsync<TResult>();
+            
+            if (result is null)
+            {
+                throw new FatalErrorException();
+            }
+            
+            return result;
+        }
+        catch (Exception)
+        {
+            throw new FatalErrorException();
+        }
     }
 
     private async Task<AccessTokenResponse> WaitUntilAccessGranted(
