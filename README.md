@@ -44,6 +44,27 @@ If you would like to build HTML reports from the test coverage, install the
 dotnet tool install --global dotnet-reportgenerator-globaltool
 ```
 
+### Important: To Calculate Coverage, BDD Tests Must Run Sequentially
+
+#### Coverlet Instrumentation Manipulates the Dotnet Assembly Under Test
+
+Because each scenario runs the dotnet application with coverlet instrumentation, the tests must run sequentially.
+
+The reason is that coverlet instruments the dotnet assembly under test for each single test individually.
+
+Running tests in parallel would lead to a resource conflict and the tests would fail.
+
+#### During Development BDD Tests Can Run in Parallel
+
+If you do not need coverage reports, you can run the BDD tests in parallel:
+
+```shell
+dotnet test --no-restore --verbosity normal --parallel=true
+# can we leave out the "=true" part?
+
+TODO: Implement a mechanism to enable / disable coverage on demand. See TODO in `EnableCoverageMeasurement.cs`
+```
+
 ### Build, Test, Create Coverage Report
 
 Run the following commands from the folder containing the `.sln` file in order to build and test.
@@ -74,9 +95,25 @@ open report/index.html
 
 ### Run the Application
 
+#### Prerequisite: Configure GitHub Client Id
+
+This application uses the GitHub API to retrieve information about repositories. You need to configure this mechanism of authentication as described in the [Authentication Setup](./docs/authentication-setup.md) file.
+
+#### Run the Application
+
+The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file.
+You can either run it from the `src/SaveEnergy` folder or from the build output folder.
+
 ```shell
-dotnet run --project src/SaveEnergy/SaveEnergy.csproj
+cd src/SaveEnergy; \
+DOTNET_ENVIRONMENT=Development dotnet run --project SaveEnergy.csproj; \
+cd ../..
 ```
+
+Running from inside the `src/SaveEnergy` directory makes sure that the application reads the configuration file linked
+in the project file.
+
+The `DOTNET_ENVIRONMENT=Development` parameter is required for the application to receive the user secrets.
 
 ## Relevant GitHub API Endpoints
 
@@ -164,5 +201,5 @@ pmd cpd --minimum-tokens 50 --language cs --dir .
 
 ## References
 
-- [GitHub: Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)
 - [GitHub REST API](https://docs.github.com/en/rest)
+- [GitHub: Skipping workflow runs](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/skipping-workflow-runs)
