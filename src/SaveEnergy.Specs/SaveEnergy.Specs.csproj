@@ -16,7 +16,7 @@
         <PackageReference Include="Reqnroll.xUnit" Version="2.1.0" />
         <PackageReference Include="WireMock.Net" Version="1.6.1" />
         <PackageReference Include="WireMock.Net.FluentAssertions" Version="1.6.1" />
-        <PackageReference Include="xunit" Version="2.9.0" />
+        <PackageReference Include="xunit" Version="2.9.2" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
