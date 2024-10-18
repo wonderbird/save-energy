@@ -10,7 +10,7 @@ public class RepositoriesQuery(
     ILogger<RepositoriesQuery> logger,
     IHttpClientFactory httpClientFactory,
     IConfiguration configuration,
-    ICanAuthenticate authenticator)
+    ICanAuthenticate authenticator) : IRepositoriesQuery
 {
     public async Task<IEnumerable<Repository>> Execute()
     {

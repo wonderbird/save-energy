@@ -62,6 +62,12 @@ public sealed class SaveEnergyStepDefinition : IDisposable
             { new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" } });
     }
 
+    [Given(@"the GitHub API returns internal errors")]
+    public void GivenTheGitHubApiReturnsInternalErrors()
+    {
+        _mockServer.ConfigureInternalServerError();
+    }
+
     [When(@"I run the application")]
     public void WhenIRunTheApplication()
     {
@@ -145,5 +151,11 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         }
 
         numberOfRepositories.Should().Be(count);
+    }
+
+    [Then(@"it reports the error to the user")]
+    public void ThenItReportsTheErrorToTheUser()
+    {
+        _process?.RecordedOutput.Should().Contain("An error prevents executing the command. Please check the logs for more information.");
     }
 }

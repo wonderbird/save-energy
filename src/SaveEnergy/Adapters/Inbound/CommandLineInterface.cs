@@ -9,10 +9,10 @@ public class CommandLineInterface : IHostedService
 {
     private readonly ILogger<CommandLineInterface> _logger;
     private readonly IHostApplicationLifetime _appLifetime;
-    private readonly RepositoriesQuery _repositoriesQuery;
+    private readonly IRepositoriesQuery _repositoriesQuery;
 
     public CommandLineInterface(ILogger<CommandLineInterface> logger, IHostApplicationLifetime appLifetime,
-        RepositoriesQuery repositoriesQuery)
+        IRepositoriesQuery repositoriesQuery)
     {
         _logger = logger;
         _appLifetime = appLifetime;
@@ -28,13 +28,22 @@ public class CommandLineInterface : IHostedService
         return Task.CompletedTask;
     }
 
-    private async void ProcessCommand()
+    internal async void ProcessCommand()
     {
-        var repositories = await _repositoriesQuery.Execute();
+        try
+        {
+            var repositories = await _repositoriesQuery.Execute();
 
-        PresentRepositories(repositories);
-        
-        _appLifetime.StopApplication();
+            PresentRepositories(repositories);
+        }
+        catch (FatalErrorException e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        finally
+        {
+            _appLifetime.StopApplication();
+        }
     }
 
     private static void PresentRepositories(IEnumerable<Repository> repositories)

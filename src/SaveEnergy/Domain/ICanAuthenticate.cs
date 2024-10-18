@@ -1,6 +1,4 @@
-using SaveEnergy.Domain;
-
-namespace SaveEnergy.Adapters.Outbound;
+namespace SaveEnergy.Domain;
 
 public interface ICanAuthenticate
 {
