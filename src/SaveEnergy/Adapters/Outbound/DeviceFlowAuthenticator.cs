@@ -95,7 +95,6 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
             
             if (result is null)
             {
-                // TODO Add a test for this case.
                 throw new FatalErrorException();
             }
             

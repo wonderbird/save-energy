@@ -1,9 +1,7 @@
 using System.Net;
 using FluentAssertions;
 using Meziantou.Extensions.Logging.Xunit;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using SaveEnergy.Adapters.Outbound;
 using SaveEnergy.Domain;
 using Xunit.Abstractions;
@@ -27,30 +25,6 @@ public class DeviceFlowAuthenticatorTest
         var act = () => authenticator.RequestAccessToken();
         
         await act.Should().ThrowAsync<FatalErrorException>();
-    }
-
-    private class EmptyConfiguration : IConfiguration
-    {
-        public IConfigurationSection GetSection(string key)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<IConfigurationSection> GetChildren()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IChangeToken GetReloadToken()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string? this[string key]
-        {
-            get => null;
-            set => throw new NotImplementedException();
-        }
     }
 
     private class EmptyResponseHttpClientFactory : IHttpClientFactory
