@@ -6,41 +6,58 @@ using SaveEnergy.Domain;
 
 namespace SaveEnergy.Adapters.Outbound;
 
-public class RepositoriesQuery(
-    ILogger<RepositoriesQuery> logger,
-    IHttpClientFactory httpClientFactory,
-    IConfiguration configuration,
-    ICanAuthenticate authenticator) : IRepositoriesQuery
+public class RepositoriesQuery : IRepositoriesQuery
 {
+    // Using a hard-coded URI makes the program easier to use.
+    //
+    // Without a default URI, the program would show an error and stop if the
+    // user hasn't set one. The user would then need to set the GitHub URL and
+    // restart the program.
+    //
+    // See also: DeviceFlowAuthenticator.DefaultAuthenticationBaseAddress
+#pragma warning disable S1075
+    private const string DefaultApiBaseAddress = "https://api.github.com";
+#pragma warning restore S1075
+
+    private readonly HttpClient _apiClient;
+    private readonly ILogger<RepositoriesQuery> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly ICanAuthenticate _authenticator;
+
+    public RepositoriesQuery(
+        ILogger<RepositoriesQuery> logger,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ICanAuthenticate authenticator)
+    {
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _authenticator = authenticator;
+
+        _apiClient = CreateApiClient();
+    }
+
     public async Task<IEnumerable<Repository>> Execute()
     {
         try
         {
-            var accessTokenResponse = await authenticator.RequestAccessToken();
-
-            // Get the 1 repository which has been pushed to most recently.
-            // GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=1&page=1
-            // Accept: application/json
-            // Authorization: Bearer {{access_token}}
-            var repositoryReadingClient = httpClientFactory.CreateClient();
-            repositoryReadingClient.DefaultRequestHeaders.Add("Accept", "application/json");
-            repositoryReadingClient.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
-            repositoryReadingClient.DefaultRequestHeaders.Authorization =
+            var accessTokenResponse = await _authenticator.RequestAccessToken();
+            _apiClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", accessTokenResponse.Token);
-            repositoryReadingClient.BaseAddress =
-                new Uri(configuration["GitHub:ApiBaseAddress"] ?? "https://api.github.com");
-            logger.LogDebug("API base address: {ApiBaseAddress}", repositoryReadingClient.BaseAddress);
 
+            // Get the first 100 repositories sorted by date of last push, descending
+            // TODO: Consider paging when processing the GitHub API response
             using var undecodedRepositoriesResponse =
-                await repositoryReadingClient.GetAsync(
+                await _apiClient.GetAsync(
                     "/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
 
-            // TODO: Handle null values correctly - consider refactoring so that the response is not needed, see DeviceFlowAuthenticator
-            logger.LogDebug("Final request URI: {RequestUri}", undecodedRepositoriesResponse.RequestMessage.RequestUri);
+            _logger.LogDebug("Final request URI: {RequestUri}",
+                undecodedRepositoriesResponse.RequestMessage?.RequestUri);
 
             undecodedRepositoriesResponse.EnsureSuccessStatusCode();
 
-            // TODO: Consider paging when processing the GitHub API response
             var repositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<Repository>>();
             return repositories ?? [];
         }
@@ -48,5 +65,19 @@ public class RepositoriesQuery(
         {
             throw new FatalErrorException();
         }
+    }
+
+    private HttpClient CreateApiClient()
+    {
+        var result = _httpClientFactory.CreateClient();
+
+        result.DefaultRequestHeaders.Add("Accept", "application/json");
+        result.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
+        result.BaseAddress =
+            new Uri(_configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress);
+
+        _logger.LogDebug("API base address: {ApiBaseAddress}", result.BaseAddress);
+
+        return result;
     }
 }

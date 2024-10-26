@@ -26,6 +26,16 @@ public class RepositoryQueryTests
 
         await act.Should().ThrowAsync<FatalErrorException>();
     }
+
+    [Fact]
+    public async Task Execute_ResponseContainsNullRequestMessage_DoesNotThrow()
+    {
+        var query = new RepositoriesQuery(_logger, new NullRequestMessageHttpClientFactory(), new EmptyConfiguration(), new FakeAuthenticator());
+        
+        var act = () => query.Execute();
+
+        await act.Should().NotThrowAsync();
+    }
     
     private class UnauthorizedHttpClientFactory : IHttpClientFactory
     {
@@ -41,6 +51,27 @@ public class RepositoryQueryTests
                 var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
                 
                 response.RequestMessage = new HttpRequestMessage(request.Method, request.RequestUri);
+                
+                return Task.FromResult(response);
+            }
+        }
+    }
+
+    private class NullRequestMessageHttpClientFactory : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name)
+        {
+            return new HttpClient(new NullRequestMessageReturningHandler());
+        }
+
+        private class NullRequestMessageReturningHandler : HttpMessageHandler
+        {
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                
+                response.RequestMessage = new HttpRequestMessage();
+                response.Content = new StringContent("[]");
                 
                 return Task.FromResult(response);
             }

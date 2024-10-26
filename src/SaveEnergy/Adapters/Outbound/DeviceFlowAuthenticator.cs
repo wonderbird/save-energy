@@ -14,6 +14,8 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     // Without a default URI, the program would show an error and stop if the
     // user hasn't set one. The user would then need to set the GitHub URL and
     // restart the program.
+    //
+    // See also: RepositoriesQuery.DefaultApiBaseAddress
 #pragma warning disable S1075
     private const string DefaultAuthenticationBaseAddress = "https://github.com";
 #pragma warning restore S1075
