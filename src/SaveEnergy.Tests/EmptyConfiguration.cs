@@ -5,24 +5,15 @@ namespace SaveEnergy.Tests;
 
 public class EmptyConfiguration : IConfiguration
 {
-    public IConfigurationSection GetSection(string key)
-    {
-        throw new NotImplementedException();
-    }
+    public IConfigurationSection GetSection(string key) => null!;
 
-    public IEnumerable<IConfigurationSection> GetChildren()
-    {
-        throw new NotImplementedException();
-    }
+    public IEnumerable<IConfigurationSection> GetChildren() => null!;
 
-    public IChangeToken GetReloadToken()
-    {
-        throw new NotImplementedException();
-    }
+    public IChangeToken GetReloadToken() => null!;
 
     public string? this[string key]
     {
         get => null;
-        set => throw new NotImplementedException();
+        set { /* for this fake configuration the setter is intentionally empty */ }
     }
 }
