@@ -1,6 +1,6 @@
+using System.Text.Json;
 using FluentAssertions;
 using SaveEnergy.Domain;
-using SaveEnergy.Specs.Steps;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
@@ -59,13 +59,7 @@ public class MockServer
 
     public void ConfigureRepositories(IEnumerable<Repository> repositories)
     {
-        // TODO: Can the Json be generated more elegantly from the repositories? They already have json properties.
-        var repositoriesJson = repositories.Select(x =>
-            new
-            {
-                name = x.Name,
-                html_url = x.HtmlUrl,
-            }).ToArray();
+        var repositoriesJson = JsonSerializer.Serialize(repositories);
         
         _mockServer?
             .Given(Request.Create()
@@ -74,7 +68,7 @@ public class MockServer
             .RespondWith(Response.Create()
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(repositoriesJson));
+                .WithBody(repositoriesJson));
     }
 
     public void ConfigureInternalServerError()

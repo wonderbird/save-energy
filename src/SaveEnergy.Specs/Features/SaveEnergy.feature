@@ -8,7 +8,7 @@ Feature: Save Energy
     Scenario: List GitHub repositories
         Given device flow is enabled for the GitHub app
         And the user owns the following repositories
-          | Name            | URL                                         |
+          | Name            | HtmlUrl                                     |
           | SaveEnergy      | https://github.com/wonderbird/save-energy   |
           | SaveTheWorld    | https://github.com/wonderbird/save-world    |
           | SaveTheUniverse | https://github.com/wonderbird/save-universe |
