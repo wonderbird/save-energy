@@ -6,7 +6,7 @@ using SaveEnergy.Adapters.Outbound;
 using SaveEnergy.Domain;
 using Xunit.Abstractions;
 
-namespace SaveEnergy.Tests;
+namespace SaveEnergy.Tests.Adapters.Outbound;
 
 public class DeviceFlowAuthenticatorTest
 {
@@ -20,7 +20,7 @@ public class DeviceFlowAuthenticatorTest
     [Fact]
     public async Task RequestAccessToken_HttpClientReturnsEmptyResponse_ThrowsFatalErrorException()
     {
-        var authenticator = new DeviceFlowAuthenticator(new EmptyResponseHttpClientFactory(), new EmptyConfiguration(), _logger);
+        var authenticator = new DeviceFlowAuthenticator(_logger, new EmptyResponseHttpClientFactory(), new EmptyConfiguration());
 
         var act = () => authenticator.RequestAccessToken();
         

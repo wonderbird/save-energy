@@ -8,7 +8,7 @@ using SaveEnergy.Adapters.Inbound;
 using SaveEnergy.Domain;
 using Xunit.Abstractions;
 
-namespace SaveEnergy.Tests;
+namespace SaveEnergy.Tests.Adapters.Inbound;
 
 public class CommandLineInterfaceTest
 {

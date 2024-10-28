@@ -8,22 +8,38 @@ namespace SaveEnergy.Adapters.Outbound;
 
 public class RepositoriesQuery : IRepositoriesQuery
 {
-    // Using a hard-coded URI makes the program easier to use.
-    //
-    // Without a default URI, the program would show an error and stop if the
-    // user hasn't set one. The user would then need to set the GitHub URL and
-    // restart the program.
-    //
-    // See also: DeviceFlowAuthenticator.DefaultAuthenticationBaseAddress
 #pragma warning disable S1075
+    /// <summary>
+    /// Fallback API base address, if not configured.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// <para>
+    /// A configurable API base address allows using the
+    /// <c>MockServer</c> in the tests.
+    /// </para>
+    ///
+    /// <para>
+    /// Warning S1075 (URIs should not be hardcoded) is disabled, because using
+    /// a hard-coded URI makes the program easier to use.
+    /// </para>
+    ///
+    /// <para>
+    /// Without a default URI, the program would show an error and stop if the
+    /// user hasn't set one. The user would then need to set the GitHub URL and
+    /// restart the program.
+    /// </para>
+    /// </remarks>
+    ///
+    /// <seealso cref="DeviceFlowAuthenticator.DefaultAuthenticationBaseAddress"/>
     private const string DefaultApiBaseAddress = "https://api.github.com";
 #pragma warning restore S1075
 
-    private readonly HttpClient _apiClient;
     private readonly ILogger<RepositoriesQuery> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
     private readonly ICanAuthenticate _authenticator;
+    private readonly HttpClient _apiClient;
 
     public RepositoriesQuery(
         ILogger<RepositoriesQuery> logger,
@@ -37,6 +53,21 @@ public class RepositoriesQuery : IRepositoriesQuery
         _authenticator = authenticator;
 
         _apiClient = CreateApiClient();
+    }
+
+    private HttpClient CreateApiClient()
+    {
+        var result = _httpClientFactory.CreateClient();
+
+        result.BaseAddress =
+            new Uri(_configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress);
+
+        result.DefaultRequestHeaders.Add("Accept", "application/json");
+        result.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
+
+        _logger.LogDebug("API base address: {ApiBaseAddress}", result.BaseAddress);
+
+        return result;
     }
 
     public async Task<IEnumerable<Repository>> Execute()
@@ -65,19 +96,5 @@ public class RepositoriesQuery : IRepositoriesQuery
         {
             throw new FatalErrorException();
         }
-    }
-
-    private HttpClient CreateApiClient()
-    {
-        var result = _httpClientFactory.CreateClient();
-
-        result.DefaultRequestHeaders.Add("Accept", "application/json");
-        result.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
-        result.BaseAddress =
-            new Uri(_configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress);
-
-        _logger.LogDebug("API base address: {ApiBaseAddress}", result.BaseAddress);
-
-        return result;
     }
 }
