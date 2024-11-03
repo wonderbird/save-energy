@@ -14,6 +14,8 @@ public class EmptyConfiguration : IConfiguration
     public string? this[string key]
     {
         get => null;
-        set { /* for this fake configuration the setter is intentionally empty */ }
+        set
+        { /* for this fake configuration the setter is intentionally empty */
+        }
     }
 }

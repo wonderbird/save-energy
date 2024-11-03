@@ -22,13 +22,15 @@ public class CommandLineInterfaceTest
     [Fact]
     public void ProcessCommand_QueryThrowsException_DoesNotThrow()
     {
-        IHostApplicationLifetime appLifetime = new ApplicationLifetime(NullLogger<ApplicationLifetime>.Instance);
+        IHostApplicationLifetime appLifetime = new ApplicationLifetime(
+            NullLogger<ApplicationLifetime>.Instance
+        );
         IRepositoriesQuery exceptionThrowingQuery = new ExceptionThrowingQuery();
-        
+
         var cli = new CommandLineInterface(_logger, appLifetime, exceptionThrowingQuery);
-        
+
         var act = () => cli.ProcessCommand();
-        
+
         act.Should().NotThrow();
     }
 

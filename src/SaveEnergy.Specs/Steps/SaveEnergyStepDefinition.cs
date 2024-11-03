@@ -15,7 +15,11 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
 
-    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext context, MockServer mockServer)
+    public SaveEnergyStepDefinition(
+        TestOutputHelper testOutputHelper,
+        ScenarioContext context,
+        MockServer mockServer
+    )
     {
         _testOutputHelper = testOutputHelper;
         _mockServer = mockServer;
@@ -58,8 +62,12 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     [Given(@"the user owns a repository")]
     public void GivenTheUserOwnsARepository()
     {
-        _mockServer.ConfigureRepositories(new List<Repository>
-            { new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" } });
+        _mockServer.ConfigureRepositories(
+            new List<Repository>
+            {
+                new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" }
+            }
+        );
     }
 
     [Given(@"the GitHub API returns internal errors")]
@@ -108,10 +116,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     }
 
     /// <summary>Identify table of repositories in the recorded output</summary>
-    /// 
+    ///
     /// <remarks>
     /// The shape of the output is:
-    /// 
+    ///
     /// <code>
     /// ... some text ...
     /// | Repository name | URL |
@@ -126,7 +134,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     /// +------------+------+--------+--------+
     /// ... some text ...
     /// </code>
-    /// 
+    ///
     /// The second table is the code coverage report, which we want to ignore.
     /// In this case, we want to identify the rows of repo1 and repo2
     /// </remarks>
@@ -139,13 +147,17 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         var numberOfRepositories = 0;
         var isTableBody = true;
 
-        _testOutputHelper.WriteLine($"Verifying that {count} repositories were printed to the console. We found:");
+        _testOutputHelper.WriteLine(
+            $"Verifying that {count} repositories were printed to the console. We found:"
+        );
         while (tableStartIndex != -1 && isTableBody)
         {
             isTableBody = outputRows[tableBodyStartIndex + numberOfRepositories].StartsWith('|');
             if (isTableBody)
             {
-                _testOutputHelper.WriteLine($"{outputRows[tableBodyStartIndex + numberOfRepositories]}");
+                _testOutputHelper.WriteLine(
+                    $"{outputRows[tableBodyStartIndex + numberOfRepositories]}"
+                );
                 numberOfRepositories++;
             }
         }
@@ -156,6 +168,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     [Then(@"it reports the error to the user")]
     public void ThenItReportsTheErrorToTheUser()
     {
-        _process?.RecordedOutput.Should().Contain("An error prevents executing the command. Please check the logs for more information.");
+        _process
+            ?.RecordedOutput.Should()
+            .Contain(
+                "An error prevents executing the command. Please check the logs for more information."
+            );
     }
 }

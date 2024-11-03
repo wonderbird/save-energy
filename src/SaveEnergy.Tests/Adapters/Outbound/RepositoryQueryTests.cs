@@ -22,8 +22,12 @@ public class RepositoryQueryTests
     [Fact]
     public async Task Execute_InvalidAccessException_ThrowsFatalErrorException()
     {
-        var query = new RepositoriesQuery(_logger, new UnauthorizedHttpClientFactory(), new EmptyConfiguration(),
-            new FakeAuthenticator());
+        var query = new RepositoriesQuery(
+            _logger,
+            new UnauthorizedHttpClientFactory(),
+            new EmptyConfiguration(),
+            new FakeAuthenticator()
+        );
 
         var act = () => query.Execute();
 
@@ -33,8 +37,12 @@ public class RepositoryQueryTests
     [Fact]
     public async Task Execute_ResponseContainsNullRequestMessage_DoesNotThrow()
     {
-        var query = new RepositoriesQuery(_logger, new NullRequestMessageHttpClientFactory(), new EmptyConfiguration(),
-            new FakeAuthenticator());
+        var query = new RepositoriesQuery(
+            _logger,
+            new NullRequestMessageHttpClientFactory(),
+            new EmptyConfiguration(),
+            new FakeAuthenticator()
+        );
 
         var act = () => query.Execute();
 
@@ -45,13 +53,22 @@ public class RepositoryQueryTests
     [InlineData("available == page size", 7, 7)]
     [InlineData("available > page size, multiple", 12, 6)]
     [InlineData("available > page size, but not multiple", 12, 5)]
-    public async Task Execute_VariyingPageSize_ReturnsAllAvailableRepositories(string _, int availableRepositories,
-        int requestedPageSize)
+    public async Task Execute_VariyingPageSize_ReturnsAllAvailableRepositories(
+        string _,
+        int availableRepositories,
+        int requestedPageSize
+    )
     {
-        var fakeHttpClientFactory = new RepositoriesReturningHttpClientFactory(availableRepositories);
+        var fakeHttpClientFactory = new RepositoriesReturningHttpClientFactory(
+            availableRepositories
+        );
 
-        var query = new RepositoriesQuery(_logger, fakeHttpClientFactory, new EmptyConfiguration(),
-            new FakeAuthenticator())
+        var query = new RepositoriesQuery(
+            _logger,
+            fakeHttpClientFactory,
+            new EmptyConfiguration(),
+            new FakeAuthenticator()
+        )
         {
             RequestedPageSize = requestedPageSize
         };
@@ -67,10 +84,16 @@ public class RepositoryQueryTests
         const int availableRepositories = 12;
         const int requestedPageSize = 5;
 
-        var fakeHttpClientFactory = new RepositoriesReturningHttpClientFactory(availableRepositories);
+        var fakeHttpClientFactory = new RepositoriesReturningHttpClientFactory(
+            availableRepositories
+        );
 
-        var query = new RepositoriesQuery(_logger, fakeHttpClientFactory, new EmptyConfiguration(),
-            new FakeAuthenticator())
+        var query = new RepositoriesQuery(
+            _logger,
+            fakeHttpClientFactory,
+            new EmptyConfiguration(),
+            new FakeAuthenticator()
+        )
         {
             RequestedPageSize = requestedPageSize
         };
@@ -98,12 +121,17 @@ public class RepositoryQueryTests
 
         private class UnauthorizedResponseReturningHandler : HttpMessageHandler
         {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-                CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken
+            )
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
 
-                response.RequestMessage = new HttpRequestMessage(request.Method, request.RequestUri);
+                response.RequestMessage = new HttpRequestMessage(
+                    request.Method,
+                    request.RequestUri
+                );
 
                 return Task.FromResult(response);
             }
@@ -119,8 +147,10 @@ public class RepositoryQueryTests
 
         private class NullRequestMessageReturningHandler : HttpMessageHandler
         {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-                CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken
+            )
             {
                 var response = new HttpResponseMessage(HttpStatusCode.OK);
 
@@ -139,11 +169,15 @@ public class RepositoryQueryTests
 
         public HttpClient CreateClient(string name)
         {
-            return new HttpClient(new RepositoriesReturningHandler(availableRepositories, RequestedUrls));
+            return new HttpClient(
+                new RepositoriesReturningHandler(availableRepositories, RequestedUrls)
+            );
         }
 
-        private class RepositoriesReturningHandler(int availableRepositories, BlockingCollection<string> requestedUrls)
-            : HttpMessageHandler
+        private class RepositoriesReturningHandler(
+            int availableRepositories,
+            BlockingCollection<string> requestedUrls
+        ) : HttpMessageHandler
         {
             /// <summary>
             /// Provide repositories for requested page and page size.
@@ -161,24 +195,33 @@ public class RepositoryQueryTests
             /// This behavior is actually coded in the <see cref="GetPageIntervalFromRequest"/> function.
             /// </para>
             /// </remarks>
-            /// 
+            ///
             /// <param name="request">GitHub API request containing the parameters "page" and "per_page"</param>
             /// <param name="cancellationToken">Allows cancelling the asynchronous operations</param>
-            /// 
+            ///
             /// <returns>HTTP response containing list of repositories for the requested page</returns>
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-                CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken
+            )
             {
                 requestedUrls.Add(request.RequestUri!.ToString(), cancellationToken);
 
                 var response = new HttpResponseMessage(HttpStatusCode.OK);
 
-                response.RequestMessage = new HttpRequestMessage(request.Method, request.RequestUri);
+                response.RequestMessage = new HttpRequestMessage(
+                    request.Method,
+                    request.RequestUri
+                );
 
                 var (start, count) = GetPageIntervalFromRequest(request);
-                
-                var repositories = Enumerable.Range(start, count).Select(x =>
-                    new Repository($"Repository-{x}", $"http://example.com/repository-{x}"));
+
+                var repositories = Enumerable
+                    .Range(start, count)
+                    .Select(x => new Repository(
+                        $"Repository-{x}",
+                        $"http://example.com/repository-{x}"
+                    ));
 
                 response.Content = new StringContent(JsonSerializer.Serialize(repositories));
 
@@ -193,9 +236,9 @@ public class RepositoryQueryTests
             /// If the requested page is larger than the number of available repositories,
             /// the function sets the count return value to 0.
             /// </remarks>
-            /// 
+            ///
             /// <param name="request">HTTP request for a page of repositories</param>
-            /// 
+            ///
             /// <returns>
             /// Tuple of (start, count) where start is the index of the first repository in the list
             /// of all repositories and count is the number of requested repositories.
@@ -208,19 +251,29 @@ public class RepositoryQueryTests
                 var queryParameters = queryString.Split(separator);
 
                 const string pageParameter = "page=";
-                var page = int.Parse(Array
-                    .Find(queryParameters, x => x.StartsWith(pageParameter, StringComparison.OrdinalIgnoreCase))
-                    ?.Split('=')[1] ?? "1");
+                var page = int.Parse(
+                    Array
+                        .Find(
+                            queryParameters,
+                            x => x.StartsWith(pageParameter, StringComparison.OrdinalIgnoreCase)
+                        )
+                        ?.Split('=')[1] ?? "1"
+                );
 
                 const string perPageParameter = "per_page=";
-                var perPage = int.Parse(Array
-                    .Find(queryParameters, x => x.StartsWith(perPageParameter, StringComparison.OrdinalIgnoreCase))
-                    ?.Split('=')[1] ?? "1");
+                var perPage = int.Parse(
+                    Array
+                        .Find(
+                            queryParameters,
+                            x => x.StartsWith(perPageParameter, StringComparison.OrdinalIgnoreCase)
+                        )
+                        ?.Split('=')[1] ?? "1"
+                );
 
                 var start = (page - 1) * perPage + 1;
                 var count = Math.Min(perPage, availableRepositories - start + 1);
                 count = Math.Max(count, 0);
-                
+
                 return (start, count);
             }
         }

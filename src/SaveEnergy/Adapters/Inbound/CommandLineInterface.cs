@@ -11,8 +11,11 @@ public class CommandLineInterface : IHostedService
     private readonly IHostApplicationLifetime _appLifetime;
     private readonly IRepositoriesQuery _repositoriesQuery;
 
-    public CommandLineInterface(ILogger<CommandLineInterface> logger, IHostApplicationLifetime appLifetime,
-        IRepositoriesQuery repositoriesQuery)
+    public CommandLineInterface(
+        ILogger<CommandLineInterface> logger,
+        IHostApplicationLifetime appLifetime,
+        IRepositoriesQuery repositoriesQuery
+    )
     {
         _logger = logger;
         _appLifetime = appLifetime;

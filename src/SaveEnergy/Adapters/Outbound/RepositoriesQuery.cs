@@ -46,7 +46,8 @@ public class RepositoriesQuery : IRepositoriesQuery
         ILogger<RepositoriesQuery> logger,
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
-        ICanAuthenticate authenticator)
+        ICanAuthenticate authenticator
+    )
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
@@ -60,8 +61,9 @@ public class RepositoriesQuery : IRepositoriesQuery
     {
         var result = _httpClientFactory.CreateClient();
 
-        result.BaseAddress =
-            new Uri(_configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress);
+        result.BaseAddress = new Uri(
+            _configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress
+        );
 
         result.DefaultRequestHeaders.Add("Accept", "application/json");
         result.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
@@ -76,8 +78,10 @@ public class RepositoriesQuery : IRepositoriesQuery
         try
         {
             var accessTokenResponse = await _authenticator.RequestAccessToken();
-            _apiClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessTokenResponse.Token);
+            _apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                accessTokenResponse.Token
+            );
 
             var incrementallyBuiltUpRepositories = new List<Repository>();
             bool hasMoreRepositories;
@@ -85,17 +89,22 @@ public class RepositoriesQuery : IRepositoriesQuery
 
             do
             {
-                using var undecodedRepositoriesResponse =
-                    await _apiClient.GetAsync(
-                        $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}");
+                using var undecodedRepositoriesResponse = await _apiClient.GetAsync(
+                    $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}"
+                );
 
                 // TODO: Is it helpful to log the final request URI after having received the response? Wouldn't it be more helpful to log the request URI before sending the request? (Originally this log was used for debugging, but this is not necessary, because we now know how to trace the requests.). Find similar places.
-                _logger.LogDebug("Final request URI: {RequestUri}",
-                    undecodedRepositoriesResponse.RequestMessage?.RequestUri);
+                _logger.LogDebug(
+                    "Final request URI: {RequestUri}",
+                    undecodedRepositoriesResponse.RequestMessage?.RequestUri
+                );
 
                 undecodedRepositoriesResponse.EnsureSuccessStatusCode();
 
-                var maybeRepositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<Repository>>();
+                var maybeRepositories =
+                    await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<
+                        IEnumerable<Repository>
+                    >();
                 var repositories = maybeRepositories?.ToList() ?? [];
 
                 if (repositories.Any())
@@ -105,8 +114,7 @@ public class RepositoriesQuery : IRepositoriesQuery
 
                 hasMoreRepositories = repositories.Count == RequestedPageSize;
                 ++page;
-            }
-            while (hasMoreRepositories);
+            } while (hasMoreRepositories);
 
             return incrementallyBuiltUpRepositories;
         }

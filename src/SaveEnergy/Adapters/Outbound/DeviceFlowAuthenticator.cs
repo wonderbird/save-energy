@@ -41,8 +41,11 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
     private readonly IConfiguration _configuration;
     private readonly HttpClient _authenticationClient;
 
-    public DeviceFlowAuthenticator(ILogger<DeviceFlowAuthenticator> logger, IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
+    public DeviceFlowAuthenticator(
+        ILogger<DeviceFlowAuthenticator> logger,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration
+    )
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
@@ -102,7 +105,11 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         {
             using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
 
-            _logger.LogDebug("Response from {RequestUri}: {DeviceCodeResponse}", requestUri, httpResponse);
+            _logger.LogDebug(
+                "Response from {RequestUri}: {DeviceCodeResponse}",
+                requestUri,
+                httpResponse
+            );
 
             httpResponse.EnsureSuccessStatusCode();
 
@@ -167,27 +174,37 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private readonly record struct DeviceCodeResponse
     {
-        [JsonPropertyName("device_code")] public string DeviceCode { get; init; }
+        [JsonPropertyName("device_code")]
+        public string DeviceCode { get; init; }
 
-        [JsonPropertyName("user_code")] public string UserCode { get; init; }
+        [JsonPropertyName("user_code")]
+        public string UserCode { get; init; }
 
-        [JsonPropertyName("verification_uri")] public string VerificationUri { get; init; }
+        [JsonPropertyName("verification_uri")]
+        public string VerificationUri { get; init; }
 
-        [JsonPropertyName("expires_in")] public int ExpiresIn { get; init; }
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; init; }
 
-        [JsonPropertyName("interval")] public int Interval { get; init; }
+        [JsonPropertyName("interval")]
+        public int Interval { get; init; }
     }
 
     private readonly record struct AccessTokenResponse
     {
-        [JsonPropertyName("access_token")] public string AccessToken { get; init; }
+        [JsonPropertyName("access_token")]
+        public string AccessToken { get; init; }
 
-        [JsonPropertyName("expires_in")] public int ExpiresIn { get; init; }
+        [JsonPropertyName("expires_in")]
+        public int ExpiresIn { get; init; }
 
-        [JsonPropertyName("refresh_token")] public string RefreshToken { get; init; }
+        [JsonPropertyName("refresh_token")]
+        public string RefreshToken { get; init; }
 
-        [JsonPropertyName("token_type")] public string TokenType { get; init; }
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; init; }
 
-        [JsonPropertyName("scope")] public string Scope { get; init; }
+        [JsonPropertyName("scope")]
+        public string Scope { get; init; }
     }
 }

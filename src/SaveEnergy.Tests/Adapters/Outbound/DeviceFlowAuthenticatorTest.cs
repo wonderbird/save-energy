@@ -16,14 +16,18 @@ public class DeviceFlowAuthenticatorTest
     {
         _logger = XUnitLogger.CreateLogger<DeviceFlowAuthenticator>(testOutputHelper);
     }
-    
+
     [Fact]
     public async Task RequestAccessToken_HttpClientReturnsEmptyResponse_ThrowsFatalErrorException()
     {
-        var authenticator = new DeviceFlowAuthenticator(_logger, new EmptyResponseHttpClientFactory(), new EmptyConfiguration());
+        var authenticator = new DeviceFlowAuthenticator(
+            _logger,
+            new EmptyResponseHttpClientFactory(),
+            new EmptyConfiguration()
+        );
 
         var act = () => authenticator.RequestAccessToken();
-        
+
         await act.Should().ThrowAsync<FatalErrorException>();
     }
 
@@ -36,7 +40,10 @@ public class DeviceFlowAuthenticatorTest
 
         private class EmptyResponseReturningHandler : HttpMessageHandler
         {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            protected override Task<HttpResponseMessage> SendAsync(
+                HttpRequestMessage request,
+                CancellationToken cancellationToken
+            )
             {
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
             }
