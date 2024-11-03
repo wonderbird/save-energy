@@ -77,51 +77,61 @@ public class RepositoriesQuery : IRepositoriesQuery
     {
         try
         {
-            var accessTokenResponse = await _authenticator.RequestAccessToken();
-            _apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Bearer",
-                accessTokenResponse.Token
-            );
+            await AddAccessTokenToApiClient();
 
-            var incrementallyBuiltUpRepositories = new List<Repository>();
-            bool hasMoreRepositories;
-            int page = 1;
-
-            do
-            {
-                using var undecodedRepositoriesResponse = await _apiClient.GetAsync(
-                    $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}"
-                );
-
-                // TODO: Is it helpful to log the final request URI after having received the response? Wouldn't it be more helpful to log the request URI before sending the request? (Originally this log was used for debugging, but this is not necessary, because we now know how to trace the requests.). Find similar places.
-                _logger.LogDebug(
-                    "Final request URI: {RequestUri}",
-                    undecodedRepositoriesResponse.RequestMessage?.RequestUri
-                );
-
-                undecodedRepositoriesResponse.EnsureSuccessStatusCode();
-
-                var maybeRepositories =
-                    await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<
-                        IEnumerable<Repository>
-                    >();
-                var repositories = maybeRepositories?.ToList() ?? [];
-
-                if (repositories.Any())
-                {
-                    incrementallyBuiltUpRepositories.AddRange(repositories);
-                }
-
-                hasMoreRepositories = repositories.Count == RequestedPageSize;
-                ++page;
-            } while (hasMoreRepositories);
-
-            return incrementallyBuiltUpRepositories;
+            return await QueryAllRepositories();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve repositories from GitHub");
             throw new FatalErrorException();
         }
+    }
+
+    private async Task AddAccessTokenToApiClient()
+    {
+        var accessTokenResponse = await _authenticator.RequestAccessToken();
+        _apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            accessTokenResponse.Token
+        );
+    }
+
+    private async Task<List<Repository>> QueryAllRepositories()
+    {
+        var result = new List<Repository>();
+        bool hasMoreRepositories;
+        var page = 1;
+
+        do
+        {
+            var additionalRepositories = await QueryNextPageOfRepositories(page);
+            ++page;
+
+            if (additionalRepositories.Count > 0)
+            {
+                result.AddRange(additionalRepositories);
+            }
+
+            hasMoreRepositories = additionalRepositories.Count == RequestedPageSize;
+        } while (hasMoreRepositories);
+
+        return result;
+    }
+
+    private async Task<List<Repository>> QueryNextPageOfRepositories(int page)
+    {
+        var requestUri =
+            $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}";
+
+        using var httpResponse = await _apiClient.GetAsync(requestUri);
+
+        httpResponse.EnsureSuccessStatusCode();
+
+        var maybeRepositories = await httpResponse.Content.ReadFromJsonAsync<
+            IEnumerable<Repository>
+        >();
+
+        return maybeRepositories?.ToList() ?? [];
     }
 }
