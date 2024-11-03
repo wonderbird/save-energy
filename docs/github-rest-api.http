@@ -51,6 +51,19 @@ GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=de
 Accept: application/json
 Authorization: Bearer {{access_token}}
 
+### GET /user/repos
+# Request a page of repositories that does not exist to find out how GitHub reacts.
+#
+# Assumption: The user has less than 1000 repositories.
+# Get page 11 of repositories when page size is 100.
+#
+# As of Oct. 30, 2024, the GitHub API returns an empty list of repositories.
+#
+# See: RepositoryQueryTests.Execute_AvailableRepositoriesIsLargerButNotMultipleOfRequestedPageSize_ReturnsAllRepositories
+GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=11
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
 # ************************* Authorization Required  **************************
 
 ### GET /emojis

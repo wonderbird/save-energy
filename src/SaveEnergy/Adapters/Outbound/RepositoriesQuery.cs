@@ -40,6 +40,7 @@ public class RepositoriesQuery : IRepositoriesQuery
     private readonly IConfiguration _configuration;
     private readonly ICanAuthenticate _authenticator;
     private readonly HttpClient _apiClient;
+    internal int RequestedPageSize = 100;
 
     public RepositoriesQuery(
         ILogger<RepositoriesQuery> logger,
@@ -78,22 +79,40 @@ public class RepositoriesQuery : IRepositoriesQuery
             _apiClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", accessTokenResponse.Token);
 
-            // Get the first 100 repositories sorted by date of last push, descending
-            // TODO: Consider paging when processing the GitHub API response
-            using var undecodedRepositoriesResponse =
-                await _apiClient.GetAsync(
-                    "/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
+            var incrementallyBuiltUpRepositories = new List<Repository>();
+            bool hasMoreRepositories;
+            int page = 1;
 
-            _logger.LogDebug("Final request URI: {RequestUri}",
-                undecodedRepositoriesResponse.RequestMessage?.RequestUri);
+            do
+            {
+                using var undecodedRepositoriesResponse =
+                    await _apiClient.GetAsync(
+                        $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}");
 
-            undecodedRepositoriesResponse.EnsureSuccessStatusCode();
+                // TODO: Is it helpful to log the final request URI after having received the response? Wouldn't it be more helpful to log the request URI before sending the request? (Originally this log was used for debugging, but this is not necessary, because we now know how to trace the requests.). Find similar places.
+                _logger.LogDebug("Final request URI: {RequestUri}",
+                    undecodedRepositoriesResponse.RequestMessage?.RequestUri);
 
-            var repositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<Repository>>();
-            return repositories ?? [];
+                undecodedRepositoriesResponse.EnsureSuccessStatusCode();
+
+                var maybeRepositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<Repository>>();
+                var repositories = maybeRepositories?.ToList() ?? [];
+
+                if (repositories.Any())
+                {
+                    incrementallyBuiltUpRepositories.AddRange(repositories);
+                }
+
+                hasMoreRepositories = repositories.Count == RequestedPageSize;
+                ++page;
+            }
+            while (hasMoreRepositories);
+
+            return incrementallyBuiltUpRepositories;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to retrieve repositories from GitHub");
             throw new FatalErrorException();
         }
     }
