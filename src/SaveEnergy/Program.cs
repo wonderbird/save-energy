@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SaveEnergy;
 using SaveEnergy.Adapters.Inbound;
 using SaveEnergy.Adapters.Outbound;
 using SaveEnergy.Domain;

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SaveEnergy.Adapters.Outbound;
 using SaveEnergy.Domain;
 
 namespace SaveEnergy.Adapters.Inbound;
@@ -51,8 +50,8 @@ public class CommandLineInterface : IHostedService
 
     private static void PresentRepositories(IEnumerable<Repository> repositories)
     {
-        Console.WriteLine($"| Repository name | URL |");
-        Console.WriteLine($"| --- | --- |");
+        Console.WriteLine("| Repository name | URL |");
+        Console.WriteLine("| --- | --- |");
         foreach (var repository in repositories)
         {
             Console.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");

@@ -46,20 +46,20 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _isDisposed = true;
     }
 
-    [Given(@"device flow is enabled for the GitHub app")]
+    [Given("device flow is enabled for the GitHub app")]
     public void GivenDeviceFlowIsEnabledForTheGitHubApp()
     {
         _mockServer.ConfigureSuccessfulDeviceAuthorization();
     }
 
-    [Given(@"the user owns the following repositories")]
+    [Given("the user owns the following repositories")]
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
         var repositories = table.CreateSet<Repository>();
         _mockServer.ConfigureRepositories(repositories);
     }
 
-    [Given(@"the user owns a repository")]
+    [Given("the user owns a repository")]
     public void GivenTheUserOwnsARepository()
     {
         _mockServer.ConfigureRepositories(
@@ -70,13 +70,13 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         );
     }
 
-    [Given(@"the GitHub API returns internal errors")]
+    [Given("the GitHub API returns internal errors")]
     public void GivenTheGitHubApiReturnsInternalErrors()
     {
         _mockServer.ConfigureInternalServerError();
     }
 
-    [When(@"I run the application")]
+    [When("I run the application")]
     public void WhenIRunTheApplication()
     {
 #if DEBUG
@@ -103,13 +103,13 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
-    [Then(@"at least one repository URL is printed to the console")]
+    [Then("at least one repository URL is printed to the console")]
     public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
     {
         Assert.Contains("https://github.com/", _process?.RecordedOutput);
     }
 
-    [Then(@"it performs the device authorization flow")]
+    [Then("it performs the device authorization flow")]
     public void ThenItPerformsTheDeviceAuthorizationFlow()
     {
         _mockServer.VerifyDeviceAuthorizationFlow();
@@ -138,7 +138,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     /// The second table is the code coverage report, which we want to ignore.
     /// In this case, we want to identify the rows of repo1 and repo2
     /// </remarks>
-    [Then(@"(.*) repository URLs are printed to the console")]
+    [Then("(.*) repository URLs are printed to the console")]
     public void ThenRepositoryUrLsArePrintedToTheConsole(int count)
     {
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
@@ -165,7 +165,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         numberOfRepositories.Should().Be(count);
     }
 
-    [Then(@"it reports the error to the user")]
+    [Then("it reports the error to the user")]
     public void ThenItReportsTheErrorToTheUser()
     {
         _process

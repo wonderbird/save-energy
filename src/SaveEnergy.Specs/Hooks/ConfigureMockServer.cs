@@ -3,10 +3,10 @@ using Xunit.Abstractions;
 namespace SaveEnergy.Specs.Hooks;
 
 [Binding]
-public class ConfigureMockServer
+public static class ConfigureMockServer
 {
     [BeforeScenario]
-    public void Start(MockServer mockServer, ITestOutputHelper testOutputHelper)
+    public static void Start(MockServer mockServer, ITestOutputHelper testOutputHelper)
     {
         mockServer.Start();
         testOutputHelper.WriteLine($"Mock server is listening on {mockServer.Url}");

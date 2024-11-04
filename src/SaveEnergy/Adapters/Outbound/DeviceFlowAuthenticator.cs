@@ -105,11 +105,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         {
             using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
 
-            _logger.LogDebug(
-                "Response from {RequestUri}: {Response}",
-                requestUri,
-                httpResponse
-            );
+            _logger.LogDebug("Response from {RequestUri}: {Response}", requestUri, httpResponse);
 
             httpResponse.EnsureSuccessStatusCode();
 
@@ -142,7 +138,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         {
             Thread.Sleep(deviceCodeResponse.Interval * 1000);
             _logger.LogDebug(
-                "Checking for authentication success for another {0} minutes ...",
+                "Checking for authentication success for another {RetryPeriodMinutes} minutes ...",
                 (deviceCodeResponse.ExpiresIn - secondsPassed.Elapsed.TotalSeconds) / 60
             );
 
@@ -174,6 +170,10 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private readonly record struct DeviceCodeResponse
     {
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        //      Code analysis complains about unused `init` accessors. This is wrong. The accessors are used
+        //      by the JSON deserializer. The warning is disabled for this record.
+
         [JsonPropertyName("device_code")]
         public string DeviceCode { get; init; }
 
@@ -188,10 +188,16 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
         [JsonPropertyName("interval")]
         public int Interval { get; init; }
+
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
     }
 
     private readonly record struct AccessTokenResponse
     {
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        //      Code analysis complains about unused `init` accessors. This is wrong. The accessors are used
+        //      by the JSON deserializer. The warning is disabled for this record.
+
         [JsonPropertyName("access_token")]
         public string AccessToken { get; init; }
 
@@ -206,5 +212,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
         [JsonPropertyName("scope")]
         public string Scope { get; init; }
+
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
     }
 }
