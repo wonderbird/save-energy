@@ -6,41 +6,132 @@ using SaveEnergy.Domain;
 
 namespace SaveEnergy.Adapters.Outbound;
 
-public class RepositoriesQuery(
-    ILogger<RepositoriesQuery> logger,
-    IHttpClientFactory httpClientFactory,
-    IConfiguration configuration,
-    ICanAuthenticate authenticator)
+public class RepositoriesQuery : IRepositoriesQuery
 {
+#pragma warning disable S1075
+    /// <summary>
+    /// Fallback API base address, if not configured.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// <para>
+    /// A configurable API base address allows using the
+    /// <c>MockServer</c> in the tests.
+    /// </para>
+    ///
+    /// <para>
+    /// Warning S1075 (URIs should not be hardcoded) is disabled, because using
+    /// a hard-coded URI makes the program easier to use.
+    /// </para>
+    ///
+    /// <para>
+    /// Without a default URI, the program would show an error and stop if the
+    /// user hasn't set one. The user would then need to set the GitHub URL and
+    /// restart the program.
+    /// </para>
+    /// </remarks>
+    ///
+    /// <seealso cref="DeviceFlowAuthenticator.DefaultAuthenticationBaseAddress"/>
+    private const string DefaultApiBaseAddress = "https://api.github.com";
+#pragma warning restore S1075
+
+    private readonly ILogger<RepositoriesQuery> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfiguration _configuration;
+    private readonly ICanAuthenticate _authenticator;
+    private readonly HttpClient _apiClient;
+    internal int RequestedPageSize = 100;
+
+    public RepositoriesQuery(
+        ILogger<RepositoriesQuery> logger,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
+        ICanAuthenticate authenticator
+    )
+    {
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+        _configuration = configuration;
+        _authenticator = authenticator;
+
+        _apiClient = CreateApiClient();
+    }
+
+    private HttpClient CreateApiClient()
+    {
+        var result = _httpClientFactory.CreateClient();
+
+        result.BaseAddress = new Uri(
+            _configuration["GitHub:ApiBaseAddress"] ?? DefaultApiBaseAddress
+        );
+
+        result.DefaultRequestHeaders.Add("Accept", "application/json");
+        result.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
+
+        _logger.LogDebug("API base address: {ApiBaseAddress}", result.BaseAddress);
+
+        return result;
+    }
+
     public async Task<IEnumerable<Repository>> Execute()
     {
-        var accessTokenResponse = await authenticator.RequestAccessToken();
-        
-        // Get the 1 repository which has been pushed to most recently.
-        // GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=1&page=1
-        // Accept: application/json
-        // Authorization: Bearer {{access_token}}
-        var repositoryReadingClient = httpClientFactory.CreateClient();
-        repositoryReadingClient.DefaultRequestHeaders.Add("Accept", "application/json");
-        repositoryReadingClient.DefaultRequestHeaders.Add("User-Agent", "SaveEnergy");
-        repositoryReadingClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accessTokenResponse.Token);
-        repositoryReadingClient.BaseAddress =
-            new Uri(configuration["GitHub:ApiBaseAddress"] ?? "https://api.github.com");
-        logger.LogDebug("API base address: {ApiBaseAddress}", repositoryReadingClient.BaseAddress);
+        try
+        {
+            await AddAccessTokenToApiClient();
 
-        using var undecodedRepositoriesResponse =
-            await repositoryReadingClient.GetAsync(
-                "/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page=100&page=1");
+            return await QueryAllRepositories();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve repositories from GitHub");
+            throw new FatalErrorException();
+        }
+    }
 
-        logger.LogDebug("Final request URI: {RequestUri}", undecodedRepositoriesResponse.RequestMessage.RequestUri);
+    private async Task AddAccessTokenToApiClient()
+    {
+        var accessTokenResponse = await _authenticator.RequestAccessToken();
+        _apiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            accessTokenResponse.Token
+        );
+    }
 
-        undecodedRepositoriesResponse.EnsureSuccessStatusCode();
+    private async Task<List<Repository>> QueryAllRepositories()
+    {
+        var result = new List<Repository>();
+        bool hasMoreRepositories;
+        var page = 1;
 
-        // TODO: Handle exceptions, e.g. HttpRequestException
-        // TODO: Consider paging when processing the GitHub API response
+        do
+        {
+            var additionalRepositories = await QueryNextPageOfRepositories(page);
+            ++page;
 
-        var repositories = await undecodedRepositoriesResponse.Content.ReadFromJsonAsync<IEnumerable<Repository>>();
-        return repositories ?? [];
+            if (additionalRepositories.Count > 0)
+            {
+                result.AddRange(additionalRepositories);
+            }
+
+            hasMoreRepositories = additionalRepositories.Count == RequestedPageSize;
+        } while (hasMoreRepositories);
+
+        return result;
+    }
+
+    private async Task<List<Repository>> QueryNextPageOfRepositories(int page)
+    {
+        var requestUri =
+            $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}";
+
+        using var httpResponse = await _apiClient.GetAsync(requestUri);
+
+        httpResponse.EnsureSuccessStatusCode();
+
+        var maybeRepositories = await httpResponse.Content.ReadFromJsonAsync<
+            IEnumerable<Repository>
+        >();
+
+        return maybeRepositories?.ToList() ?? [];
     }
 }

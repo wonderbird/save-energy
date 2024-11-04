@@ -9,49 +9,67 @@ namespace SaveEnergy.Adapters.Outbound;
 
 internal class DeviceFlowAuthenticator : ICanAuthenticate
 {
-    // Using a hard-coded URI makes the program easier to use.
-    //
-    // Without a default URI, the program would show an error and stop if the
-    // user hasn't set one. The user would then need to set the GitHub URL and
-    // restart the program.
 #pragma warning disable S1075
+    /// <summary>
+    /// Fallback authentication base address, if not configured.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// <para>
+    /// A configurable authentication base address allows using the
+    /// <c>MockServer</c> in the tests.
+    /// </para>
+    ///
+    /// <para>
+    /// Warning S1075 (URIs should not be hardcoded) is disabled, because using
+    /// a hard-coded URI makes the program easier to use.
+    /// </para>
+    ///
+    /// <para>
+    /// Without a default URI, the program would show an error and stop if the
+    /// user hasn't set one. The user would then need to set the GitHub URL and
+    /// restart the program.
+    /// </para>
+    /// </remarks>
+    ///
+    /// <seealso cref="RepositoriesQuery.DefaultApiBaseAddress"/>
     private const string DefaultAuthenticationBaseAddress = "https://github.com";
 #pragma warning restore S1075
 
-    private readonly HttpClient _authenticationClient;
+    private readonly ILogger<DeviceFlowAuthenticator> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<DeviceFlowAuthenticator> _logger;
+    private readonly HttpClient _authenticationClient;
 
     public DeviceFlowAuthenticator(
+        ILogger<DeviceFlowAuthenticator> logger,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
-        ILogger<DeviceFlowAuthenticator> logger
+        IConfiguration configuration
     )
     {
+        _logger = logger;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
-        _logger = logger;
 
         _authenticationClient = CreateAuthenticationClient();
     }
 
     private HttpClient CreateAuthenticationClient()
     {
-        var authenticationClient = _httpClientFactory.CreateClient();
+        var result = _httpClientFactory.CreateClient();
 
-        authenticationClient.BaseAddress = new Uri(
+        result.BaseAddress = new Uri(
             _configuration["GitHub:AuthenticationBaseAddress"] ?? DefaultAuthenticationBaseAddress
         );
-        
-        authenticationClient.DefaultRequestHeaders.Add("Accept", "application/json");
+
+        result.DefaultRequestHeaders.Add("Accept", "application/json");
 
         _logger.LogDebug(
             "Authentication base address: {AuthenticationBaseAddress}",
-            authenticationClient.BaseAddress
+            result.BaseAddress
         );
 
-        return authenticationClient;
+        return result;
     }
 
     public async Task<AccessToken> RequestAccessToken()
@@ -83,11 +101,27 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private async Task<TResult> PostJsonAsync<TResult>(string requestUri, object value)
     {
-        using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
+        try
+        {
+            using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
 
-        httpResponse.EnsureSuccessStatusCode();
+            _logger.LogDebug("Response from {RequestUri}: {Response}", requestUri, httpResponse);
 
-        return await httpResponse.Content.ReadFromJsonAsync<TResult>();
+            httpResponse.EnsureSuccessStatusCode();
+
+            var result = await httpResponse.Content.ReadFromJsonAsync<TResult>();
+
+            if (result is null)
+            {
+                throw new FatalErrorException();
+            }
+
+            return result;
+        }
+        catch (Exception)
+        {
+            throw new FatalErrorException();
+        }
     }
 
     private async Task<AccessTokenResponse> WaitUntilAccessGranted(
@@ -104,7 +138,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
         {
             Thread.Sleep(deviceCodeResponse.Interval * 1000);
             _logger.LogDebug(
-                "Checking for authentication success for another {0} minutes ...",
+                "Checking for authentication success for another {RetryPeriodMinutes} minutes ...",
                 (deviceCodeResponse.ExpiresIn - secondsPassed.Elapsed.TotalSeconds) / 60
             );
 
@@ -136,6 +170,10 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
     private readonly record struct DeviceCodeResponse
     {
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        //      Code analysis complains about unused `init` accessors. This is wrong. The accessors are used
+        //      by the JSON deserializer. The warning is disabled for this record.
+
         [JsonPropertyName("device_code")]
         public string DeviceCode { get; init; }
 
@@ -150,10 +188,16 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
         [JsonPropertyName("interval")]
         public int Interval { get; init; }
+
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
     }
 
     private readonly record struct AccessTokenResponse
     {
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        //      Code analysis complains about unused `init` accessors. This is wrong. The accessors are used
+        //      by the JSON deserializer. The warning is disabled for this record.
+
         [JsonPropertyName("access_token")]
         public string AccessToken { get; init; }
 
@@ -168,5 +212,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
 
         [JsonPropertyName("scope")]
         public string Scope { get; init; }
+
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
     }
 }

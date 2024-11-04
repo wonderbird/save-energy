@@ -15,7 +15,11 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
 
-    public SaveEnergyStepDefinition(TestOutputHelper testOutputHelper, ScenarioContext context, MockServer mockServer)
+    public SaveEnergyStepDefinition(
+        TestOutputHelper testOutputHelper,
+        ScenarioContext context,
+        MockServer mockServer
+    )
     {
         _testOutputHelper = testOutputHelper;
         _mockServer = mockServer;
@@ -42,27 +46,37 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _isDisposed = true;
     }
 
-    [Given(@"device flow is enabled for the GitHub app")]
+    [Given("device flow is enabled for the GitHub app")]
     public void GivenDeviceFlowIsEnabledForTheGitHubApp()
     {
         _mockServer.ConfigureSuccessfulDeviceAuthorization();
     }
 
-    [Given(@"the user owns the following repositories")]
+    [Given("the user owns the following repositories")]
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
         var repositories = table.CreateSet<Repository>();
         _mockServer.ConfigureRepositories(repositories);
     }
 
-    [Given(@"the user owns a repository")]
+    [Given("the user owns a repository")]
     public void GivenTheUserOwnsARepository()
     {
-        _mockServer.ConfigureRepositories(new List<Repository>
-            { new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" } });
+        _mockServer.ConfigureRepositories(
+            new List<Repository>
+            {
+                new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" }
+            }
+        );
     }
 
-    [When(@"I run the application")]
+    [Given("the GitHub API returns internal errors")]
+    public void GivenTheGitHubApiReturnsInternalErrors()
+    {
+        _mockServer.ConfigureInternalServerError();
+    }
+
+    [When("I run the application")]
     public void WhenIRunTheApplication()
     {
 #if DEBUG
@@ -89,23 +103,23 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
-    [Then(@"at least one repository URL is printed to the console")]
+    [Then("at least one repository URL is printed to the console")]
     public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
     {
         Assert.Contains("https://github.com/", _process?.RecordedOutput);
     }
 
-    [Then(@"it performs the device authorization flow")]
+    [Then("it performs the device authorization flow")]
     public void ThenItPerformsTheDeviceAuthorizationFlow()
     {
         _mockServer.VerifyDeviceAuthorizationFlow();
     }
 
     /// <summary>Identify table of repositories in the recorded output</summary>
-    /// 
+    ///
     /// <remarks>
     /// The shape of the output is:
-    /// 
+    ///
     /// <code>
     /// ... some text ...
     /// | Repository name | URL |
@@ -120,11 +134,11 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     /// +------------+------+--------+--------+
     /// ... some text ...
     /// </code>
-    /// 
+    ///
     /// The second table is the code coverage report, which we want to ignore.
     /// In this case, we want to identify the rows of repo1 and repo2
     /// </remarks>
-    [Then(@"(.*) repository URLs are printed to the console")]
+    [Then("(.*) repository URLs are printed to the console")]
     public void ThenRepositoryUrLsArePrintedToTheConsole(int count)
     {
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
@@ -133,17 +147,31 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         var numberOfRepositories = 0;
         var isTableBody = true;
 
-        _testOutputHelper.WriteLine($"Verifying that {count} repositories were printed to the console. We found:");
+        _testOutputHelper.WriteLine(
+            $"Verifying that {count} repositories were printed to the console. We found:"
+        );
         while (tableStartIndex != -1 && isTableBody)
         {
             isTableBody = outputRows[tableBodyStartIndex + numberOfRepositories].StartsWith('|');
             if (isTableBody)
             {
-                _testOutputHelper.WriteLine($"{outputRows[tableBodyStartIndex + numberOfRepositories]}");
+                _testOutputHelper.WriteLine(
+                    $"{outputRows[tableBodyStartIndex + numberOfRepositories]}"
+                );
                 numberOfRepositories++;
             }
         }
 
         numberOfRepositories.Should().Be(count);
+    }
+
+    [Then("it reports the error to the user")]
+    public void ThenItReportsTheErrorToTheUser()
+    {
+        _process
+            ?.RecordedOutput.Should()
+            .Contain(
+                "An error prevents executing the command. Please check the logs for more information."
+            );
     }
 }
