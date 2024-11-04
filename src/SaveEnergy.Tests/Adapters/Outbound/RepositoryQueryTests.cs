@@ -250,31 +250,27 @@ public class RepositoryQueryTests
                 var queryString = request.RequestUri?.Query[1..] ?? "";
                 var queryParameters = queryString.Split(separator);
 
-                const string pageParameter = "page=";
-                var page = int.Parse(
-                    Array
-                        .Find(
-                            queryParameters,
-                            x => x.StartsWith(pageParameter, StringComparison.OrdinalIgnoreCase)
-                        )
-                        ?.Split('=')[1] ?? "1"
-                );
-
-                const string perPageParameter = "per_page=";
-                var perPage = int.Parse(
-                    Array
-                        .Find(
-                            queryParameters,
-                            x => x.StartsWith(perPageParameter, StringComparison.OrdinalIgnoreCase)
-                        )
-                        ?.Split('=')[1] ?? "1"
-                );
-
+                var page = ParseQueryParameter("page=", queryParameters);
+                var perPage = ParseQueryParameter("per_page=", queryParameters);
+                
                 var start = (page - 1) * perPage + 1;
                 var count = Math.Min(perPage, availableRepositories - start + 1);
                 count = Math.Max(count, 0);
 
                 return (start, count);
+            }
+
+            private static int ParseQueryParameter(string parameterName, string[] queryParameters)
+            {
+                var page = int.Parse(
+                    Array
+                        .Find(
+                            queryParameters,
+                            x => x.StartsWith(parameterName, StringComparison.OrdinalIgnoreCase)
+                        )
+                        ?.Split('=')[1] ?? "1"
+                );
+                return page;
             }
         }
     }
