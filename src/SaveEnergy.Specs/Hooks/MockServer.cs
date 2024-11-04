@@ -24,6 +24,12 @@ public class MockServer
 
     public void ConfigureSuccessfulDeviceAuthorization()
     {
+        ConfigureDeviceCodeResponse();
+        ConfigureAccesTokenResponse();
+    }
+
+    private void ConfigureDeviceCodeResponse()
+    {
         _mockServer
             ?.Given(Request.Create().WithPath("/login/device/code").UsingPost())
             .RespondWith(
@@ -42,7 +48,10 @@ public class MockServer
                         }
                     )
             );
+    }
 
+    private void ConfigureAccesTokenResponse()
+    {
         _mockServer
             ?.Given(Request.Create().WithPath("/login/oauth/access_token").UsingPost())
             .RespondWith(
