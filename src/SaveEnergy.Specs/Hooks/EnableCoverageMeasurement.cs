@@ -9,7 +9,6 @@ public class EnableCoverageMeasurement
     [BeforeScenario]
     public void EnableCoverage(ITestOutputHelper testOutputHelper)
     {
-        // TODO: Can the coverage measurement be enabled / disabled for all tests by a command line flag or configuration file? Disabling coverage measurement would allow running the tests in parallel in the IDE during development time.
         testOutputHelper.WriteLine("Coverage measurement is enabled");
     }
 }

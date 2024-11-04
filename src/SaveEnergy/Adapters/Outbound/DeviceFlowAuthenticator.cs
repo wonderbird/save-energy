@@ -106,7 +106,7 @@ internal class DeviceFlowAuthenticator : ICanAuthenticate
             using var httpResponse = await _authenticationClient.PostAsJsonAsync(requestUri, value);
 
             _logger.LogDebug(
-                "Response from {RequestUri}: {DeviceCodeResponse}",
+                "Response from {RequestUri}: {Response}",
                 requestUri,
                 httpResponse
             );
