@@ -19,19 +19,51 @@ Consider sustainability by saving energy for each inactive GitHub repository.
 
 ## Development and Support Status
 
-I am developing during my spare time and use this project for learning purposes. Please assume that I will need some
-days to answer your questions. At some point I might lose interest in the project. Please keep this in mind when using
-this project in a production environment.
+I am developing during my spare time and use this project for learning purposes. Please assume that I will need some days to answer your questions. At some point I might lose interest in the project. Please keep this in mind when using this project in a production environment.
 
-## Build, Test, Run
+## Building the Project
+
+### Prerequisites
+
+To compile, test and run this project the latest LTS release of the [.NET SDK](https://dotnet.microsoft.com/download) is required on your machine.
+
+### Building the Project
+
+Run the following commands from the folder containing the `.sln` file in order to build the project:
+
+```sh
+dotnet build
+```
+
+### Running the Application
+
+#### Prerequisite: Configure GitHub Client Id
+
+This application uses the GitHub API to retrieve information about repositories. You need to configure this mechanism of authentication as described in the [Authentication Setup](./docs/authentication-setup.md) file.
+
+#### Running the Application
+
+The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file. You can either run it from the `src/SaveEnergy` folder or from the build output folder.
+
+```shell
+cd src/SaveEnergy; \
+DOTNET_ENVIRONMENT=Development dotnet run --project SaveEnergy.csproj; \
+cd ../..
+```
+
+Running from inside the `src/SaveEnergy` directory makes sure that the application reads the configuration file linked in the project file.
+
+The `DOTNET_ENVIRONMENT=Development` parameter is required for the application to receive the user secrets.
+
+## Running the Tests
+
+### Test Overview
+
+The project contains unit tests in the [./src/SaveEnergy.Tests](./src/SaveEnergy.Tests) folder and integration tests in the [./src/SaveEnergy.Specs](./src/SaveEnergy.Specs) folder.
 
 ### Prerequisites: Coverlet, ReportGenerator
 
-To compile, test and run this project the latest LTS release of the [.NET SDK](https://dotnet.microsoft.com/download)
-is required on your machine.
-
-The acceptance tests in [./src/SaveEnergy.Specs](./src/SaveEnergy.Specs) require coverlet to be installed as global
-tool:
+The acceptance tests in [./src/SaveEnergy.Specs](./src/SaveEnergy.Specs) require coverlet to be installed as global tool:
 
 ```shell
 dotnet tool install --global coverlet.console
@@ -54,15 +86,12 @@ The reason is that coverlet instruments the dotnet assembly under test for each 
 
 Running tests in parallel would lead to a resource conflict and the tests would fail.
 
-#### During Development BDD Tests Can Run in Parallel
+#### During Development Integration Tests Can Run in Parallel
 
 If you do not need coverage reports, you can run the BDD tests in parallel:
 
 ```shell
 dotnet test --no-restore --verbosity normal --parallel=true
-# can we leave out the "=true" part?
-
-TODO: Implement a mechanism to enable / disable coverage on demand. See TODO in `EnableCoverageMeasurement.cs`
 ```
 
 ### Build, Test, Create Coverage Report
@@ -93,28 +122,6 @@ reportgenerator "-reports:src/SaveEnergy.Tests/TestResults/*.xml;src/SaveEnergy.
 open report/index.html
 ```
 
-### Run the Application
-
-#### Prerequisite: Configure GitHub Client Id
-
-This application uses the GitHub API to retrieve information about repositories. You need to configure this mechanism of authentication as described in the [Authentication Setup](./docs/authentication-setup.md) file.
-
-#### Run the Application
-
-The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file.
-You can either run it from the `src/SaveEnergy` folder or from the build output folder.
-
-```shell
-cd src/SaveEnergy; \
-DOTNET_ENVIRONMENT=Development dotnet run --project SaveEnergy.csproj; \
-cd ../..
-```
-
-Running from inside the `src/SaveEnergy` directory makes sure that the application reads the configuration file linked
-in the project file.
-
-The `DOTNET_ENVIRONMENT=Development` parameter is required for the application to receive the user secrets.
-
 ## Relevant GitHub API Endpoints
 
 [./docs/README.md](./docs/README.md) shows how you can run a collection of GitHub API requests relevant to the project.
@@ -126,13 +133,13 @@ at the [OOP Conference in 2023](https://www.oop-konferenz.de/).
 
 Many thanks to [JetBrains](https://www.jetbrains.com/?from=save-energy) who provide an [Open Source License](https://www.jetbrains.com/community/opensource/) for this project ❤️.
 
-### Before Creating a Pull Request
+## Before Creating a Pull Request
 
-#### Fix Static Code Analysis Warnings
+### Fix Static Code Analysis Warnings
 
 Fix static code analysis warnings reported by [SonarLint](https://www.sonarsource.com/products/sonarlint/).
 
-#### Apply Code Formatting Rules
+### Apply Code Formatting Rules
 
 ```shell
 # Install https://csharpier.io globally, once
@@ -142,7 +149,7 @@ dotnet tool install -g csharpier
 dotnet csharpier .
 ```
 
-#### Check Code Metrics
+### Check Code Metrics
 
 Check code metrics using [metrix++](https://github.com/metrixplusplus/metrixplusplus)
 
@@ -175,7 +182,7 @@ At the time of writing, I want to stay below the following thresholds:
 --max-limit=std.code.mi:simple:1
 ```
 
-#### Remove Code Duplication Where Appropriate
+### Remove Code Duplication Where Appropriate
 
 To detect duplicates I use the [CPD Copy Paste Detector](https://docs.pmd-code.org/latest/pmd_userdocs_cpd.html)
 tool from the [PMD Source Code Analyzer Project](https://docs.pmd-code.org/latest/index.html).
