@@ -17,6 +17,14 @@ Consider sustainability by saving energy for each inactive GitHub repository.
 - If you don't work on the code any longer, then download the repository to an
   archive on your local machine, archive it on GitHub or delete from GitHub.
 
+## Vision
+
+The Save Energy application makes it easy to check which of your GitHub repositories have been inactive for a long time. It provides you with a list of repositories that you might want to consider archiving or deleting to save energy.
+
+This shows the vision for a minimum viable product:
+
+![Frontend](./docs/frontend.drawio.png)
+
 ## Development and Support Status
 
 I am developing during my spare time and use this project for learning purposes. Please assume that I will need some days to answer your questions. At some point I might lose interest in the project. Please keep this in mind when using this project in a production environment.
