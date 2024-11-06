@@ -122,10 +122,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     ///
     /// <code>
     /// ... some text ...
-    /// | Repository name | URL |
-    /// | --- | --- |
-    /// | repo1 | https://github.com/... |
-    /// | repo2 | https://github.com/... |
+    /// | Repository name | URL | ...
+    /// | --- | --- | ...
+    /// | repo1 | https://github.com/... | ...
+    /// | repo2 | https://github.com/... | ...
     /// ... some text ...
     /// +------------+------+--------+--------+
     /// | Module     | Line | Branch | Method |
@@ -138,31 +138,54 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     /// The second table is the code coverage report, which we want to ignore.
     /// In this case, we want to identify the rows of repo1 and repo2
     /// </remarks>
-    [Then("(.*) repository URLs are printed to the console")]
-    public void ThenRepositoryUrLsArePrintedToTheConsole(int count)
+    [Then("the following repositories table is printed to the console")]
+    public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
+        var expectedRepositories = table.CreateSet<Repository>().ToList();
+        
+        _testOutputHelper.WriteLine("Verifying that the following repositories were printed to the console:");
+        foreach (var repository in expectedRepositories)
+        {
+            _testOutputHelper.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
+        }
+        
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
         var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | URL |");
         var tableBodyStartIndex = tableStartIndex + 2;
         var numberOfRepositories = 0;
         var isTableBody = true;
-
-        _testOutputHelper.WriteLine(
-            $"Verifying that {count} repositories were printed to the console. We found:"
-        );
+        
+        var actualRepositories = new List<Repository>();
         while (tableStartIndex != -1 && isTableBody)
         {
-            isTableBody = outputRows[tableBodyStartIndex + numberOfRepositories].StartsWith('|');
+            var outputRow = outputRows[tableBodyStartIndex + numberOfRepositories];
+            
+            isTableBody = outputRow.StartsWith('|');
             if (isTableBody)
             {
-                _testOutputHelper.WriteLine(
-                    $"{outputRows[tableBodyStartIndex + numberOfRepositories]}"
-                );
+                var parsedRepository = ParseRepositoryFromTableRow(outputRow);
+                actualRepositories.Add(parsedRepository);
                 numberOfRepositories++;
             }
         }
 
-        numberOfRepositories.Should().Be(count);
+        _testOutputHelper.WriteLine("We parsed the following repositories from the printed output:");
+        foreach (var repository in actualRepositories)
+        {
+            _testOutputHelper.WriteLine(repository.ToString());
+        }
+        
+        actualRepositories.Should().Equal(expectedRepositories);
+    }
+
+    private static Repository ParseRepositoryFromTableRow(string outputRow)
+    {
+        const int nameColumn = 1;
+        const int htmlUrlColumn = 2;
+        
+        var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
+        
+        return new Repository(columns[nameColumn], columns[htmlUrlColumn]);
     }
 
     [Then("it reports the error to the user")]
