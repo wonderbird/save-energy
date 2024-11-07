@@ -220,7 +220,10 @@ public class RepositoryQueryTests
                     .Range(start, count)
                     .Select(x => new Repository(
                         $"Repository-{x}",
-                        $"http://example.com/repository-{x}"
+                        DateTime.UtcNow,
+                        $"http://example.com/repository-{x}",
+                        $"git@example.com:some-user/repository-{x}.git",
+                        $"https://example.com/some-user/repository-{x}.git"
                     ));
 
                 response.Content = new StringContent(JsonSerializer.Serialize(repositories));

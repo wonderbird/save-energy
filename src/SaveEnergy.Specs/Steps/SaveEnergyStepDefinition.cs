@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Globalization;
+using FluentAssertions;
 using SaveEnergy.Domain;
 using SaveEnergy.Specs.Hooks;
 using TestProcessWrapper;
@@ -122,10 +123,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     ///
     /// <code>
     /// ... some text ...
-    /// | Repository name | URL | ...
-    /// | --- | --- | ...
-    /// | repo1 | https://github.com/... | ...
-    /// | repo2 | https://github.com/... | ...
+    /// | Repository name | Last Pushed | HTML URL | SSH URL | Clone URL |
+    /// | --- | --- | --- | --- | --- |
+    /// | repo1 | 2022-10-01T00:00:00Z | https://github.com/... | git@github.com:... | https://github.com/... |
+    /// | repo2 | 2021-10-01T00:00:00Z | https://github.com/... | git@github.com:... | https://github.com/... |
     /// ... some text ...
     /// +------------+------+--------+--------+
     /// | Module     | Line | Branch | Method |
@@ -150,7 +151,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         }
         
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
-        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | URL |");
+        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | Last Change | HTML URL | SSH URL | Clone URL |");
         var tableBodyStartIndex = tableStartIndex + 2;
         var numberOfRepositories = 0;
         var isTableBody = true;
@@ -181,11 +182,19 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     private static Repository ParseRepositoryFromTableRow(string outputRow)
     {
         const int nameColumn = 1;
-        const int htmlUrlColumn = 2;
+        const int pushedAtColumn = 2;
+        const int htmlUrlColumn = 3;
+        const int sshUrlColumn = 4;
+        const int cloneUrlColumn = 5;
         
         var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
         
-        return new Repository(columns[nameColumn], columns[htmlUrlColumn]);
+        return new Repository(
+            columns[nameColumn],
+            DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            columns[htmlUrlColumn],
+            columns[sshUrlColumn],
+            columns[cloneUrlColumn]);
     }
 
     [Then("it reports the error to the user")]

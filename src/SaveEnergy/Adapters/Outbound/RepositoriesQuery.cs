@@ -125,6 +125,8 @@ public class RepositoriesQuery : IRepositoriesQuery
             $"/user/repos?affiliation=owner&sort=pushed&direction=desc&per_page={RequestedPageSize}&page={page}";
 
         using var httpResponse = await _apiClient.GetAsync(requestUri);
+        
+        _logger.LogDebug("Response body: {ResponseBody}", await httpResponse.Content.ReadAsStringAsync());
 
         httpResponse.EnsureSuccessStatusCode();
 
