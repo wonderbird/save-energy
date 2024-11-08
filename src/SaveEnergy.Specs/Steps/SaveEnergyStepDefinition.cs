@@ -11,11 +11,12 @@ namespace SaveEnergy.Specs.Steps;
 [Binding]
 public sealed class SaveEnergyStepDefinition : IDisposable
 {
+    private const int ExpectedColumnsInResultTable = 6;
     private readonly TestOutputHelper _testOutputHelper;
     private readonly MockServer _mockServer;
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
-
+    
     public SaveEnergyStepDefinition(
         TestOutputHelper testOutputHelper,
         ScenarioContext context,
@@ -57,6 +58,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
         var repositories = table.CreateSet<Repository>();
+        
+        // Ensure tests fail if the table structure changes
+        table.Header.Count.Should().Be(ExpectedColumnsInResultTable, $"this function handles only specification tables with {ExpectedColumnsInResultTable} columns");
+
         _mockServer.ConfigureRepositories(repositories);
     }
 
@@ -143,6 +148,9 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
         var expectedRepositories = table.CreateSet<Repository>().ToList();
+
+        // Ensure tests fail if the table structure changes
+        table.Header.Count.Should().Be(ExpectedColumnsInResultTable, $"this function handles only specification tables with {ExpectedColumnsInResultTable} columns");
         
         _testOutputHelper.WriteLine("Verifying that the following repositories were printed to the console:");
         foreach (var repository in expectedRepositories)
@@ -151,7 +159,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         }
         
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
-        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | Last Change | HTML URL | SSH URL | Clone URL |");
+        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
         var tableBodyStartIndex = tableStartIndex + 2;
         var numberOfRepositories = 0;
         var isTableBody = true;
@@ -181,17 +189,25 @@ public sealed class SaveEnergyStepDefinition : IDisposable
 
     private static Repository ParseRepositoryFromTableRow(string outputRow)
     {
-        const int nameColumn = 1;
-        const int pushedAtColumn = 2;
+        const int nameColumn = 0;
+        const int pushedAtColumn = 1;
+        const int descriptionColumn = 2;
         const int htmlUrlColumn = 3;
         const int sshUrlColumn = 4;
         const int cloneUrlColumn = 5;
-        
+
         var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
+
+        // ignore the first and last element, which are empty, because the row starts and ends with '|'
+        columns = columns.Skip(1).Take(columns.Count - 2).ToList();
+        
+        // Ensure tests fail if the table structure changes
+        columns.Count.Should().Be(ExpectedColumnsInResultTable, $"this function parses only output tables with {ExpectedColumnsInResultTable} columns");
         
         return new Repository(
             columns[nameColumn],
             DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            columns[descriptionColumn],
             columns[htmlUrlColumn],
             columns[sshUrlColumn],
             columns[cloneUrlColumn]);

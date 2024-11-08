@@ -221,6 +221,7 @@ public class RepositoryQueryTests
                     .Select(x => new Repository(
                         $"Repository-{x}",
                         DateTime.UtcNow,
+                        $"Description of repository {x}",
                         $"http://example.com/repository-{x}",
                         $"git@example.com:some-user/repository-{x}.git",
                         $"https://example.com/some-user/repository-{x}.git"

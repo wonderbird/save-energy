@@ -36,7 +36,7 @@ public class CommandLineInterface : IHostedService
         try
         {
             var repositories = await _repositoriesQuery.Execute();
-            
+
             repositories = repositories.OrderBy(r => r.PushedAt);
 
             PresentRepositories(repositories);
@@ -53,12 +53,13 @@ public class CommandLineInterface : IHostedService
 
     private static void PresentRepositories(IEnumerable<Repository> repositories)
     {
-        Console.WriteLine("| Repository name | Last Change | HTML URL | SSH URL | Clone URL |");
-        Console.WriteLine("| --- | --- | --- | --- | --- |");
+        Console.WriteLine("| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
+        Console.WriteLine("| --- | --- | --- | --- | --- | --- |");
         foreach (var repository in repositories)
         {
             Console.WriteLine($"| {repository.Name} " +
                               $"| {repository.PushedAt.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)} " +
+                              $"| {repository.Description} " +
                               $"| {repository.HtmlUrl} " +
                               $"| {repository.SshUrl} " +
                               $"| {repository.CloneUrl} |");
