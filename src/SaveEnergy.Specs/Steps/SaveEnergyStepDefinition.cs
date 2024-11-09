@@ -57,11 +57,9 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     [Given("the user owns the following repositories")]
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
-        var repositories = table.CreateSet<Repository>();
+        TableShouldMatchExpectedFormat(table.Header.Count);
         
-        // Ensure tests fail if the table structure changes
-        table.Header.Count.Should().Be(ExpectedColumnsInResultTable, $"this function handles only specification tables with {ExpectedColumnsInResultTable} columns");
-
+        var repositories = table.CreateSet<Repository>();
         _mockServer.ConfigureRepositories(repositories);
     }
 
@@ -109,18 +107,6 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
-    [Then("at least one repository URL is printed to the console")]
-    public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
-    {
-        Assert.Contains("https://github.com/", _process?.RecordedOutput);
-    }
-
-    [Then("it performs the device authorization flow")]
-    public void ThenItPerformsTheDeviceAuthorizationFlow()
-    {
-        _mockServer.VerifyDeviceAuthorizationFlow();
-    }
-
     /// <summary>Identify table of repositories in the recorded output</summary>
     ///
     /// <remarks>
@@ -147,10 +133,9 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     [Then("the following repositories table is printed to the console")]
     public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
-        var expectedRepositories = table.CreateSet<Repository>().ToList();
+        TableShouldMatchExpectedFormat(table.Header.Count);
 
-        // Ensure tests fail if the table structure changes
-        table.Header.Count.Should().Be(ExpectedColumnsInResultTable, $"this function handles only specification tables with {ExpectedColumnsInResultTable} columns");
+        var expectedRepositories = table.CreateSet<Repository>().ToList();
         
         _testOutputHelper.WriteLine("Verifying that the following repositories were printed to the console:");
         foreach (var repository in expectedRepositories)
@@ -187,30 +172,16 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         actualRepositories.Should().Equal(expectedRepositories);
     }
 
-    private static Repository ParseRepositoryFromTableRow(string outputRow)
+    [Then("at least one repository URL is printed to the console")]
+    public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
     {
-        const int nameColumn = 0;
-        const int pushedAtColumn = 1;
-        const int descriptionColumn = 2;
-        const int htmlUrlColumn = 3;
-        const int sshUrlColumn = 4;
-        const int cloneUrlColumn = 5;
+        Assert.Contains("https://github.com/", _process?.RecordedOutput);
+    }
 
-        var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
-
-        // ignore the first and last element, which are empty, because the row starts and ends with '|'
-        columns = columns.Skip(1).Take(columns.Count - 2).ToList();
-        
-        // Ensure tests fail if the table structure changes
-        columns.Count.Should().Be(ExpectedColumnsInResultTable, $"this function parses only output tables with {ExpectedColumnsInResultTable} columns");
-        
-        return new Repository(
-            columns[nameColumn],
-            DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
-            columns[descriptionColumn],
-            columns[htmlUrlColumn],
-            columns[sshUrlColumn],
-            columns[cloneUrlColumn]);
+    [Then("it performs the device authorization flow")]
+    public void ThenItPerformsTheDeviceAuthorizationFlow()
+    {
+        _mockServer.VerifyDeviceAuthorizationFlow();
     }
 
     [Then("it reports the error to the user")]
@@ -221,5 +192,34 @@ public sealed class SaveEnergyStepDefinition : IDisposable
             .Contain(
                 "An error prevents executing the command. Please check the logs for more information."
             );
+    }
+
+    private static void TableShouldMatchExpectedFormat(int numberOfColumns)
+    {
+        numberOfColumns.Should().Be(ExpectedColumnsInResultTable,
+            $"this function handles only specification tables with {{ExpectedColumnsInResultTable}} columns");
+    }
+
+    private static Repository ParseRepositoryFromTableRow(string outputRow)
+    {
+        var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
+        columns = columns.Skip(1).Take(columns.Count - 2).ToList();
+        
+        TableShouldMatchExpectedFormat(columns.Count);
+
+        const int nameColumn = 0;
+        const int pushedAtColumn = 1;
+        const int descriptionColumn = 2;
+        const int htmlUrlColumn = 3;
+        const int sshUrlColumn = 4;
+        const int cloneUrlColumn = 5;
+        
+        return new Repository(
+            columns[nameColumn],
+            DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            columns[descriptionColumn],
+            columns[htmlUrlColumn],
+            columns[sshUrlColumn],
+            columns[cloneUrlColumn]);
     }
 }
