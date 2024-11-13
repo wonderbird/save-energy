@@ -17,6 +17,8 @@
       <None Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <InternalsVisibleTo Include="SaveEnergy.Specs" />
+      <InternalsVisibleTo Include="SaveEnergy.Tests" />
     </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@
 using FluentAssertions;
 using SaveEnergy.Domain;
 using SaveEnergy.Specs.Hooks;
+using SaveEnergy.TestHelpers;
 using TestProcessWrapper;
 using Xunit;
 using Xunit.Sdk;
@@ -9,22 +10,27 @@ using Xunit.Sdk;
 namespace SaveEnergy.Specs.Steps;
 
 [Binding]
-public sealed class SaveEnergyStepDefinition : IDisposable
+public sealed class SaveEnergyStepDefinition : IDisposable, IClassFixture<ApplicationHostBuilderFixture>
 {
     private const int ExpectedColumnsInResultTable = 6;
     private readonly TestOutputHelper _testOutputHelper;
     private readonly MockServer _mockServer;
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
-    
+    private readonly IHost _host;
+    private readonly TestOutputPresenter _testOutputPresenter;
+
     public SaveEnergyStepDefinition(
         TestOutputHelper testOutputHelper,
         ScenarioContext context,
-        MockServer mockServer
+        MockServer mockServer,
+        ApplicationHostBuilderFixture fixture
     )
     {
         _testOutputHelper = testOutputHelper;
         _mockServer = mockServer;
+        _host = fixture.Host;
+        _testOutputPresenter = fixture.TestOutputPresenter;
     }
 
     ~SaveEnergyStepDefinition()
@@ -107,6 +113,33 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
 
+    // Summary
+    // -------
+    //
+    // The goal of this method is to provide a step which replaces the
+    // WhenIRunTheApplication step in SaveEnergyStepDefinition.cs
+    //
+    // Details
+    // -------
+    //
+    // Provide a Reqnroll when statement to set up the application host
+    // using Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory
+    //
+    // The following articles describe the general approach:
+    // - https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0
+    // - https://stackoverflow.com/questions/77936032/reuse-host-for-integration-testing-in-a-net-8-console-app
+    //
+    // On GitHub there is a sample application:
+    // - https://github.com/dotnet/AspNetCore.Docs.Samples/tree/main/test/integration-tests/8.x/IntegrationTestsSample/tests/RazorPagesProject.Tests
+    //
+    // This is the documentation for the WebApplicationFactory:
+    // - https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.testing.webapplicationfactory-1?view=aspnetcore-8.0
+    [When(@"I run the application with the Microsoft\.AspNetCore\.Mvc\.Testing\.WebApplicationFactory")]
+    public async Task WhenIRunTheApplicationWithTheMicrosoftAspNetCoreMvcTestingWebApplicationFactory()
+    {
+        await _host.RunAsync();
+    }
+    
     /// <summary>Identify table of repositories in the recorded output</summary>
     ///
     /// <remarks>
@@ -144,16 +177,16 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         }
         
         var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
-        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
+        var tableStartIndex = Array.IndexOf(outputRows,"| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
         var tableBodyStartIndex = tableStartIndex + 2;
         var numberOfRepositories = 0;
         var isTableBody = true;
-        
+
         var actualRepositories = new List<Repository>();
         while (tableStartIndex != -1 && isTableBody)
         {
             var outputRow = outputRows[tableBodyStartIndex + numberOfRepositories];
-            
+
             isTableBody = outputRow.StartsWith('|');
             if (isTableBody)
             {
@@ -168,7 +201,52 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         {
             _testOutputHelper.WriteLine(repository.ToString());
         }
+
+        actualRepositories.Should().Equal(expectedRepositories);
+    }
+
+    [Then("alternative the following repositories table is printed to the console")]
+    public void ThenAlternativeTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
+    {
+        TableShouldMatchExpectedFormat(table.Header.Count);
+
+        var expectedRepositories = table.CreateSet<Repository>().ToList();
+
+        _testOutputHelper.WriteLine("Verifying that the following repositories were printed to the console:");
+        foreach (var repository in expectedRepositories)
+        {
+            _testOutputHelper.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
+        }
+
+        // TODO Later: Probably transition to the design presented in https://stackoverflow.com/questions/77211786/how-to-start-a-full-net-core-worker-service-in-an-integration-end-to-end-test
+        var outputRows = _testOutputPresenter.RecordedOutput.Split('\n');
         
+        var tableStartIndex = Array.IndexOf(outputRows,
+            "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
+        var tableBodyStartIndex = tableStartIndex + 2;
+        var numberOfRepositories = 0;
+        var isTableBody = true;
+
+        var actualRepositories = new List<Repository>();
+        while (tableStartIndex != -1 && isTableBody)
+        {
+            var outputRow = outputRows[tableBodyStartIndex + numberOfRepositories];
+
+            isTableBody = outputRow.StartsWith('|');
+            if (isTableBody)
+            {
+                var parsedRepository = ParseRepositoryFromTableRow(outputRow);
+                actualRepositories.Add(parsedRepository);
+                numberOfRepositories++;
+            }
+        }
+
+        _testOutputHelper.WriteLine("We parsed the following repositories from the printed output:");
+        foreach (var repository in actualRepositories)
+        {
+            _testOutputHelper.WriteLine(repository.ToString());
+        }
+
         actualRepositories.Should().Equal(expectedRepositories);
     }
 
@@ -204,7 +282,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     {
         var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
         columns = columns.Skip(1).Take(columns.Count - 2).ToList();
-        
+
         TableShouldMatchExpectedFormat(columns.Count);
 
         const int nameColumn = 0;
@@ -213,7 +291,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         const int htmlUrlColumn = 3;
         const int sshUrlColumn = 4;
         const int cloneUrlColumn = 5;
-        
+
         return new Repository(
             columns[nameColumn],
             DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SaveEnergy.Adapters.Inbound;
 using SaveEnergy.Domain;
+using SaveEnergy.TestHelpers;
 using Xunit.Abstractions;
 
 namespace SaveEnergy.Tests.Adapters.Inbound;
@@ -13,10 +14,12 @@ namespace SaveEnergy.Tests.Adapters.Inbound;
 public class CommandLineInterfaceTest
 {
     private readonly ILogger<CommandLineInterface> _logger;
+    private readonly ICanPresentOutput _outputPresenter;
 
     public CommandLineInterfaceTest(ITestOutputHelper testOutputHelper)
     {
         _logger = XUnitLogger.CreateLogger<CommandLineInterface>(testOutputHelper);
+        _outputPresenter = new TestOutputPresenter(testOutputHelper);
     }
 
     [Fact]
@@ -27,7 +30,7 @@ public class CommandLineInterfaceTest
         );
         IRepositoriesQuery exceptionThrowingQuery = new ExceptionThrowingQuery();
 
-        var cli = new CommandLineInterface(_logger, appLifetime, exceptionThrowingQuery);
+        var cli = new CommandLineInterface(_logger, appLifetime, exceptionThrowingQuery, _outputPresenter);
 
         var act = () => cli.ProcessCommand();
 

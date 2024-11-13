@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{36FE0F0E-5
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SaveEnergy.TestHelpers", "SaveEnergy.TestHelpers\SaveEnergy.TestHelpers.csproj", "{C5533234-4003-4022-889D-AFA099CABC23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{351B5DD3-4A2F-49DF-9356-301BF70800A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{351B5DD3-4A2F-49DF-9356-301BF70800A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{351B5DD3-4A2F-49DF-9356-301BF70800A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5533234-4003-4022-889D-AFA099CABC23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5533234-4003-4022-889D-AFA099CABC23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5533234-4003-4022-889D-AFA099CABC23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5533234-4003-4022-889D-AFA099CABC23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
