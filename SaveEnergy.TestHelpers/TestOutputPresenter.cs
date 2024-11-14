@@ -6,7 +6,7 @@ namespace SaveEnergy.TestHelpers;
 public class TestOutputPresenter : ICanPresentOutput
 {
     private readonly ITestOutputHelper _testOutputHelper;
-    public string RecordedOutput { get; private set; }
+    public string RecordedOutput { get; private set; } = "";
 
     public TestOutputPresenter(ITestOutputHelper testOutputHelper)
     {

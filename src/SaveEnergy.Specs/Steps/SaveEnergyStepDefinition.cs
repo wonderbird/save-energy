@@ -1,5 +1,7 @@
 ﻿using System.Globalization;
 using FluentAssertions;
+using Meziantou.Extensions.Logging.Xunit;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SaveEnergy.Domain;
 using SaveEnergy.Specs.Hooks;
 using SaveEnergy.TestHelpers;
@@ -10,27 +12,49 @@ using Xunit.Sdk;
 namespace SaveEnergy.Specs.Steps;
 
 [Binding]
-public sealed class SaveEnergyStepDefinition : IDisposable, IClassFixture<ApplicationHostBuilderFixture>
+public sealed class SaveEnergyStepDefinition : IDisposable
 {
     private const int ExpectedColumnsInResultTable = 6;
     private readonly TestOutputHelper _testOutputHelper;
     private readonly MockServer _mockServer;
     private TestProcessWrapper.TestProcessWrapper? _process;
     private bool _isDisposed;
-    private readonly IHost _host;
     private readonly TestOutputPresenter _testOutputPresenter;
+    private readonly IHost _host;
 
     public SaveEnergyStepDefinition(
         TestOutputHelper testOutputHelper,
         ScenarioContext context,
-        MockServer mockServer,
-        ApplicationHostBuilderFixture fixture
+        MockServer mockServer
     )
     {
         _testOutputHelper = testOutputHelper;
         _mockServer = mockServer;
-        _host = fixture.Host;
-        _testOutputPresenter = fixture.TestOutputPresenter;
+        _testOutputPresenter = new TestOutputPresenter(_testOutputHelper);
+
+        _host = CreateApplicationHost();
+    }
+
+    private IHost CreateApplicationHost()
+    {
+        var builder = Program.CreateApplicationBuilder([]);
+        builder.Services
+            .RemoveAll(typeof(ICanPresentOutput))
+            .AddSingleton<ICanPresentOutput>(_testOutputPresenter);
+
+        builder.Configuration
+            .AddInMemoryCollection([
+                new KeyValuePair<string, string?>("GitHub:AuthenticationBaseAddress", _mockServer.Url),
+                new KeyValuePair<string, string?>("GitHub:ApiBaseAddress", _mockServer.Url)
+            ]);
+        
+        builder.Logging
+            .ClearProviders()
+            .AddProvider(new XUnitLoggerProvider(_testOutputHelper));
+        
+        builder.Environment.EnvironmentName = "Test";
+        
+        return builder.Build();
     }
 
     ~SaveEnergyStepDefinition()
@@ -49,6 +73,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable, IClassFixture<Applic
         if (!_isDisposed && disposing)
         {
             _process?.Dispose();
+            _host.Dispose();
         }
 
         _isDisposed = true;
@@ -112,28 +137,8 @@ public sealed class SaveEnergyStepDefinition : IDisposable, IClassFixture<Applic
         _testOutputHelper.WriteLine(_process.RecordedOutput);
         _testOutputHelper.WriteLine("===== End of recorded process output =====");
     }
-
-    // Summary
-    // -------
-    //
-    // The goal of this method is to provide a step which replaces the
-    // WhenIRunTheApplication step in SaveEnergyStepDefinition.cs
-    //
-    // Details
-    // -------
-    //
-    // Provide a Reqnroll when statement to set up the application host
-    // using Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory
-    //
-    // The following articles describe the general approach:
-    // - https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0
-    // - https://stackoverflow.com/questions/77936032/reuse-host-for-integration-testing-in-a-net-8-console-app
-    //
-    // On GitHub there is a sample application:
-    // - https://github.com/dotnet/AspNetCore.Docs.Samples/tree/main/test/integration-tests/8.x/IntegrationTestsSample/tests/RazorPagesProject.Tests
-    //
-    // This is the documentation for the WebApplicationFactory:
-    // - https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.testing.webapplicationfactory-1?view=aspnetcore-8.0
+    
+    /// <<summary>Replace the TestProcessWrapper by an IHost</summary>
     [When(@"I run the application with the Microsoft\.AspNetCore\.Mvc\.Testing\.WebApplicationFactory")]
     public async Task WhenIRunTheApplicationWithTheMicrosoftAspNetCoreMvcTestingWebApplicationFactory()
     {
@@ -218,7 +223,6 @@ public sealed class SaveEnergyStepDefinition : IDisposable, IClassFixture<Applic
             _testOutputHelper.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
         }
 
-        // TODO Later: Probably transition to the design presented in https://stackoverflow.com/questions/77211786/how-to-start-a-full-net-core-worker-service-in-an-integration-end-to-end-test
         var outputRows = _testOutputPresenter.RecordedOutput.Split('\n');
         
         var tableStartIndex = Array.IndexOf(outputRows,
