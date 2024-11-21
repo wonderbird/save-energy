@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\src\SaveEnergy\SaveEnergy.csproj" />
+      <ProjectReference Include="..\SaveEnergy\SaveEnergy.csproj" />
     </ItemGroup>
 
 </Project>
