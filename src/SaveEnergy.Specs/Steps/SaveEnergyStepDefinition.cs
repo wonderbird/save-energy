@@ -104,6 +104,8 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         await _host.RunAsync();
     }
     
+    // TODO: Refactor this long method.
+    // TODO: Check this file for further improvements.
     [Then("the following repositories table is printed to the console")]
     public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {

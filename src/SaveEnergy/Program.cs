@@ -8,7 +8,7 @@ var builder = CreateApplicationBuilder(args);
 using var host = builder.Build();
 await host.RunAsync();
 
-// Make the Program class public so that it can be used in the integration tests
+// Hosting the application for integration tests requires Program to be public.
 // See https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-8.0
 public static partial class Program
 {
