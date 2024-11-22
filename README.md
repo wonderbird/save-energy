@@ -31,11 +31,7 @@ I am developing during my spare time and use this project for learning purposes.
 
 ## Building the Project
 
-### Prerequisites
-
 To compile, test and run this project the latest LTS release of the [.NET SDK](https://dotnet.microsoft.com/download) is required on your machine.
-
-### Building the Project
 
 Run the following commands from the folder containing the `.sln` file in order to build the project:
 
@@ -43,13 +39,9 @@ Run the following commands from the folder containing the `.sln` file in order t
 dotnet build
 ```
 
-### Running the Application
-
-#### Prerequisite: Configure GitHub Client Id
+## Running the Application
 
 This application uses the GitHub API to retrieve information about repositories. You need to configure this mechanism of authentication as described in the [Authentication Setup](./docs/authentication-setup.md) file.
-
-#### Running the Application
 
 The application must be run from a folder containing the [appsettings.json](./src/SaveEnergy/appsettings.json) file. You can either run it from the `src/SaveEnergy` folder or from the build output folder.
 
@@ -71,35 +63,11 @@ The project contains unit tests in the [./src/SaveEnergy.Tests](./src/SaveEnergy
 
 ### Prerequisites: Coverlet, ReportGenerator
 
-The acceptance tests in [./src/SaveEnergy.Specs](./src/SaveEnergy.Specs) require coverlet to be installed as global tool:
-
-```shell
-dotnet tool install --global coverlet.console
-```
-
 If you would like to build HTML reports from the test coverage, install the
 [ReportGenerator](https://reportgenerator.io/) tool:
 
 ```shell
 dotnet tool install --global dotnet-reportgenerator-globaltool
-```
-
-### Important: To Calculate Coverage, BDD Tests Must Run Sequentially
-
-#### Coverlet Instrumentation Manipulates the Dotnet Assembly Under Test
-
-Because each scenario runs the dotnet application with coverlet instrumentation, the tests must run sequentially.
-
-The reason is that coverlet instruments the dotnet assembly under test for each single test individually.
-
-Running tests in parallel would lead to a resource conflict and the tests would fail.
-
-#### During Development Integration Tests Can Run in Parallel
-
-If you do not need coverage reports, you can run the BDD tests in parallel:
-
-```shell
-dotnet test --no-restore --verbosity normal --parallel=true
 ```
 
 ### Build, Test, Create Coverage Report
