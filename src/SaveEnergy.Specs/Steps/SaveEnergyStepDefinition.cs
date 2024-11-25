@@ -104,8 +104,6 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         await _host.RunAsync();
     }
     
-    // TODO: Refactor this long method.
-    // TODO: Check this file for further improvements.
     [Then("the following repositories table is printed to the console")]
     public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
@@ -113,54 +111,41 @@ public sealed class SaveEnergyStepDefinition : IDisposable
 
         var expectedRepositories = table.CreateSet<Repository>().ToList();
 
-        _testOutputHelper.WriteLine("Verifying that the following repositories were printed to the console:");
-        foreach (var repository in expectedRepositories)
-        {
-            _testOutputHelper.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
-        }
+        LogRepositoriesWithMessage(expectedRepositories, "Repositories expected in output:");
 
-        var outputRows = _testOutputPresenter.RecordedOutput.Split('\n');
+        const char tableIdentifier = '|';
+        const int headerAndSeparator = 2;
+
+        var actualRepositories = _testOutputPresenter.RecordedOutput
+            .Where(r => r.StartsWith(tableIdentifier))
+            .Skip(headerAndSeparator)
+            .Select(ParseRepositoryFromTableRow);
+
+        LogRepositoriesWithMessage(actualRepositories, "Repositories parsed from output:");
         
-        var tableStartIndex = Array.IndexOf(outputRows,
-            "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
-        var tableBodyStartIndex = tableStartIndex + 2;
-        var numberOfRepositories = 0;
-        var isTableBody = true;
-
-        var actualRepositories = new List<Repository>();
-        while (tableStartIndex != -1 && isTableBody)
-        {
-            var outputRow = outputRows[tableBodyStartIndex + numberOfRepositories];
-
-            isTableBody = outputRow.StartsWith('|');
-            if (isTableBody)
-            {
-                var parsedRepository = ParseRepositoryFromTableRow(outputRow);
-                actualRepositories.Add(parsedRepository);
-                numberOfRepositories++;
-            }
-        }
-
-        _testOutputHelper.WriteLine("We parsed the following repositories from the printed output:");
-        foreach (var repository in actualRepositories)
-        {
-            _testOutputHelper.WriteLine(repository.ToString());
-        }
-
         actualRepositories.Should().Equal(expectedRepositories);
     }
-    
+
     [Then("it performs the device authorization flow")]
     public void ThenItPerformsTheDeviceAuthorizationFlow()
     {
         _mockServer.VerifyDeviceAuthorizationFlow();
     }
-
+    
     [Then("it reports the error to the user")]
     public void ThenItReportsTheErrorToTheUser()
     {
         _testOutputPresenter.RecordedOutput.Should()
             .Contain("An error prevents executing the command. Please check the logs for more information.");
+    }
+
+    private void LogRepositoriesWithMessage(IEnumerable<Repository> expectedRepositories, string message)
+    {
+        _testOutputHelper.WriteLine(message);
+        foreach (var repository in expectedRepositories)
+        {
+            _testOutputHelper.WriteLine(repository.ToString());
+        }
     }
 
     private static void TableShouldMatchExpectedFormat(int numberOfColumns)

@@ -6,7 +6,10 @@ namespace SaveEnergy.TestHelpers;
 public class TestOutputPresenter : ICanPresentOutput
 {
     private readonly ITestOutputHelper _testOutputHelper;
-    public string RecordedOutput { get; private set; } = "";
+
+    private readonly List<string> _recordedOutput = [];
+
+    public IEnumerable<string> RecordedOutput => _recordedOutput;
 
     public TestOutputPresenter(ITestOutputHelper testOutputHelper)
     {
@@ -15,7 +18,7 @@ public class TestOutputPresenter : ICanPresentOutput
 
     public void Present(string output)
     {
-        RecordedOutput += output + "\n";
+        _recordedOutput.Add(output);
         _testOutputHelper.WriteLine(output);
     }
 }
