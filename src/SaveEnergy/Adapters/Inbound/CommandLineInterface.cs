@@ -56,16 +56,20 @@ public class CommandLineInterface : IHostedService
 
     private void PresentRepositories(IEnumerable<Repository> repositories)
     {
-        _outputPresenter.Present("| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |");
+        _outputPresenter.Present(
+            "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |"
+        );
         _outputPresenter.Present("| --- | --- | --- | --- | --- | --- |");
         foreach (var repository in repositories)
         {
-            _outputPresenter.Present($"| {repository.Name} " +
-                              $"| {repository.PushedAt.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)} " +
-                              $"| {repository.Description} " +
-                              $"| {repository.HtmlUrl} " +
-                              $"| {repository.SshUrl} " +
-                              $"| {repository.CloneUrl} |");
+            _outputPresenter.Present(
+                $"| {repository.Name} "
+                    + $"| {repository.PushedAt.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)} "
+                    + $"| {repository.Description} "
+                    + $"| {repository.HtmlUrl} "
+                    + $"| {repository.SshUrl} "
+                    + $"| {repository.CloneUrl} |"
+            );
         }
     }
 

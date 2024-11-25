@@ -13,12 +13,12 @@ namespace SaveEnergy.Specs.Steps;
 public sealed class SaveEnergyStepDefinition : IDisposable
 {
     private const int ExpectedColumnsInResultTable = 6;
-    
+
     private readonly TestOutputHelper _testOutputHelper;
     private readonly MockServer _mockServer;
     private readonly TestOutputPresenter _testOutputPresenter;
     private readonly IHost _host;
-    
+
     private bool _isDisposed;
 
     public SaveEnergyStepDefinition(
@@ -37,22 +37,24 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     private IHost CreateApplicationHost()
     {
         var builder = Program.CreateApplicationBuilder([]);
-        builder.Services
-            .RemoveAll(typeof(ICanPresentOutput))
+        builder
+            .Services.RemoveAll(typeof(ICanPresentOutput))
             .AddSingleton<ICanPresentOutput>(_testOutputPresenter);
 
-        builder.Configuration
-            .AddInMemoryCollection([
-                new KeyValuePair<string, string?>("GitHub:AuthenticationBaseAddress", _mockServer.Url),
+        builder.Configuration.AddInMemoryCollection(
+            [
+                new KeyValuePair<string, string?>(
+                    "GitHub:AuthenticationBaseAddress",
+                    _mockServer.Url
+                ),
                 new KeyValuePair<string, string?>("GitHub:ApiBaseAddress", _mockServer.Url)
-            ]);
-        
-        builder.Logging
-            .ClearProviders()
-            .AddProvider(new XUnitLoggerProvider(_testOutputHelper));
-        
+            ]
+        );
+
+        builder.Logging.ClearProviders().AddProvider(new XUnitLoggerProvider(_testOutputHelper));
+
         builder.Environment.EnvironmentName = "Test";
-        
+
         return builder.Build();
     }
 
@@ -87,23 +89,23 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
         TableShouldMatchExpectedFormat(table.Header.Count);
-        
+
         var repositories = table.CreateSet<Repository>();
         _mockServer.ConfigureRepositories(repositories);
     }
-    
+
     [Given("the GitHub API returns internal errors")]
     public void GivenTheGitHubApiReturnsInternalErrors()
     {
         _mockServer.ConfigureInternalServerError();
     }
-    
+
     [When(@"I run the application")]
     public async Task WhenIRunTheApplication()
     {
         await _host.RunAsync();
     }
-    
+
     [Then("the following repositories table is printed to the console")]
     public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
@@ -116,13 +118,13 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         const char tableIdentifier = '|';
         const int headerAndSeparator = 2;
 
-        var actualRepositories = _testOutputPresenter.RecordedOutput
-            .Where(r => r.StartsWith(tableIdentifier))
+        var actualRepositories = _testOutputPresenter
+            .RecordedOutput.Where(r => r.StartsWith(tableIdentifier))
             .Skip(headerAndSeparator)
             .Select(ParseRepositoryFromTableRow);
 
         LogRepositoriesWithMessage(actualRepositories, "Repositories parsed from output:");
-        
+
         actualRepositories.Should().Equal(expectedRepositories);
     }
 
@@ -131,15 +133,21 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     {
         _mockServer.VerifyDeviceAuthorizationFlow();
     }
-    
+
     [Then("it reports the error to the user")]
     public void ThenItReportsTheErrorToTheUser()
     {
-        _testOutputPresenter.RecordedOutput.Should()
-            .Contain("An error prevents executing the command. Please check the logs for more information.");
+        _testOutputPresenter
+            .RecordedOutput.Should()
+            .Contain(
+                "An error prevents executing the command. Please check the logs for more information."
+            );
     }
 
-    private void LogRepositoriesWithMessage(IEnumerable<Repository> expectedRepositories, string message)
+    private void LogRepositoriesWithMessage(
+        IEnumerable<Repository> expectedRepositories,
+        string message
+    )
     {
         _testOutputHelper.WriteLine(message);
         foreach (var repository in expectedRepositories)
@@ -150,8 +158,12 @@ public sealed class SaveEnergyStepDefinition : IDisposable
 
     private static void TableShouldMatchExpectedFormat(int numberOfColumns)
     {
-        numberOfColumns.Should().Be(ExpectedColumnsInResultTable,
-            $"this function handles only specification tables with {{ExpectedColumnsInResultTable}} columns");
+        numberOfColumns
+            .Should()
+            .Be(
+                ExpectedColumnsInResultTable,
+                $"this function handles only specification tables with {{ExpectedColumnsInResultTable}} columns"
+            );
     }
 
     private static Repository ParseRepositoryFromTableRow(string outputRow)
@@ -170,10 +182,15 @@ public sealed class SaveEnergyStepDefinition : IDisposable
 
         return new Repository(
             columns[nameColumn],
-            DateTime.Parse(columns[pushedAtColumn], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind),
+            DateTime.Parse(
+                columns[pushedAtColumn],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            ),
             columns[descriptionColumn],
             columns[htmlUrlColumn],
             columns[sshUrlColumn],
-            columns[cloneUrlColumn]);
+            columns[cloneUrlColumn]
+        );
     }
 }

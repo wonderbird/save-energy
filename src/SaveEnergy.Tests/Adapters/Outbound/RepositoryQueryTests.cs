@@ -256,7 +256,7 @@ public class RepositoryQueryTests
 
                 var page = ParseQueryParameter("page=", queryParameters);
                 var perPage = ParseQueryParameter("per_page=", queryParameters);
-                
+
                 var start = (page - 1) * perPage + 1;
                 var count = Math.Min(perPage, availableRepositories - start + 1);
                 count = Math.Max(count, 0);

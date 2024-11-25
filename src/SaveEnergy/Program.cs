@@ -16,7 +16,7 @@ public static partial class Program
     public static HostApplicationBuilder CreateApplicationBuilder(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
-        
+
         builder.Services.AddHttpClient();
         builder.Services.AddHttpClient("TracingClient");
 

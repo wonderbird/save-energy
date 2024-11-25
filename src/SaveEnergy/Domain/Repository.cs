@@ -9,5 +9,4 @@ public readonly record struct Repository(
     [property: JsonPropertyName("html_url")] string HtmlUrl,
     [property: JsonPropertyName("ssh_url")] string SshUrl,
     [property: JsonPropertyName("clone_url")] string CloneUrl
-    
 );

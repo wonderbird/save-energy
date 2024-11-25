@@ -30,7 +30,12 @@ public class CommandLineInterfaceTest
         );
         IRepositoriesQuery exceptionThrowingQuery = new ExceptionThrowingQuery();
 
-        var cli = new CommandLineInterface(_logger, appLifetime, exceptionThrowingQuery, _outputPresenter);
+        var cli = new CommandLineInterface(
+            _logger,
+            appLifetime,
+            exceptionThrowingQuery,
+            _outputPresenter
+        );
 
         var act = () => cli.ProcessCommand();
 

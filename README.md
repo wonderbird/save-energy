@@ -130,21 +130,25 @@ dotnet csharpier .
 Check code metrics using [metrix++](https://github.com/metrixplusplus/metrixplusplus)
 
 - Configure the location of the cloned metrix++ scripts
+  
   ```shell
   export METRIXPP=/path/to/metrixplusplus
   ```
 
 - Collect metrics
+  
   ```shell
   python "$METRIXPP/metrix++.py" collect --std.code.complexity.cyclomatic --std.code.lines.code --std.code.todo.comments --std.code.maintindex.simple -- .
   ```
 
 - Get an overview
+  
   ```shell
   python "$METRIXPP/metrix++.py" view --db-file=./metrixpp.db
   ```
 
 - Apply thresholds
+  
   ```shell
   python "$METRIXPP/metrix++.py" limit --db-file=./metrixpp.db --max-limit=std.code.complexity:cyclomatic:5 --max-limit=std.code.lines:code:25:function --max-limit=std.code.todo:comments:0 --max-limit=std.code.mi:simple:1
   ```
