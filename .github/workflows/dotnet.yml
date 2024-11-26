@@ -55,7 +55,7 @@ jobs:
 
     # Only run for PR to main, because otherwise the secrets might be exposed
     # to evil pseudo contributors.
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
         
     steps:
       # the repository is required by codeclimate-action
