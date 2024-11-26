@@ -53,8 +53,11 @@ jobs:
     name: Publish coverage reports
     needs: build-and-test
 
-    # Only run for PR to main, because otherwise the secrets might be exposed
-    # to evil pseudo contributors.
+    # Only publish coverage reports when building the main branch.
+    #
+    # This avoids exposing the secrets to attackers who debug print the
+    # secrets during the pull request verification build.
+
     if: github.ref == 'refs/heads/main'
         
     steps:
