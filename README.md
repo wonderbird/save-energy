@@ -125,6 +125,21 @@ dotnet tool install -g csharpier
 dotnet csharpier .
 ```
 
+### Remove temporary and generated files
+
+Temporary and generated files create false positives during static code analysis.
+
+```sh
+# Remove temporary and generated files
+# 1. dry run
+git clean -ndx
+```
+
+```shell
+# 2. Remove the files shown by the dry run
+git clean -fdx
+```
+
 ### Check Code Metrics
 
 Check code metrics using [metrix++](https://github.com/metrixplusplus/metrixplusplus)
@@ -169,17 +184,6 @@ tool from the [PMD Source Code Analyzer Project](https://docs.pmd-code.org/lates
 
 If you have installed PMD by download & unzip, replace `pmd` by `./run.sh`.
 The [homebrew pmd formula](https://formulae.brew.sh/formula/pmd) makes the `pmd` command globally available.
-
-```sh
-# Remove temporary and generated files
-# 1. dry run
-git clean -ndx
-```
-
-```shell
-# 2. Remove the files shown by the dry run
-git clean -fdx
-```
 
 ```shell
 # Identify duplicated code in files to push to GitHub
