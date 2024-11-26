@@ -126,6 +126,11 @@ public class RepositoriesQuery : IRepositoriesQuery
 
         using var httpResponse = await _apiClient.GetAsync(requestUri);
 
+        _logger.LogDebug(
+            "Response body: {ResponseBody}",
+            await httpResponse.Content.ReadAsStringAsync()
+        );
+
         httpResponse.EnsureSuccessStatusCode();
 
         var maybeRepositories = await httpResponse.Content.ReadFromJsonAsync<

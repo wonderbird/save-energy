@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SaveEnergy.Domain;
@@ -9,16 +10,19 @@ public class CommandLineInterface : IHostedService
     private readonly ILogger<CommandLineInterface> _logger;
     private readonly IHostApplicationLifetime _appLifetime;
     private readonly IRepositoriesQuery _repositoriesQuery;
+    private readonly ICanPresentOutput _outputPresenter;
 
     public CommandLineInterface(
         ILogger<CommandLineInterface> logger,
         IHostApplicationLifetime appLifetime,
-        IRepositoriesQuery repositoriesQuery
+        IRepositoriesQuery repositoriesQuery,
+        ICanPresentOutput outputPresenter
     )
     {
         _logger = logger;
         _appLifetime = appLifetime;
         _repositoriesQuery = repositoriesQuery;
+        _outputPresenter = outputPresenter;
 
         _appLifetime.ApplicationStarted.Register(ProcessCommand);
     }
@@ -36,11 +40,13 @@ public class CommandLineInterface : IHostedService
         {
             var repositories = await _repositoriesQuery.Execute();
 
+            repositories = repositories.OrderBy(r => r.PushedAt);
+
             PresentRepositories(repositories);
         }
         catch (FatalErrorException e)
         {
-            Console.WriteLine(e.Message);
+            _outputPresenter.Present(e.Message);
         }
         finally
         {
@@ -48,13 +54,22 @@ public class CommandLineInterface : IHostedService
         }
     }
 
-    private static void PresentRepositories(IEnumerable<Repository> repositories)
+    private void PresentRepositories(IEnumerable<Repository> repositories)
     {
-        Console.WriteLine("| Repository name | URL |");
-        Console.WriteLine("| --- | --- |");
+        _outputPresenter.Present(
+            "| Repository name | Last Change | Description | HTML URL | SSH URL | Clone URL |"
+        );
+        _outputPresenter.Present("| --- | --- | --- | --- | --- | --- |");
         foreach (var repository in repositories)
         {
-            Console.WriteLine($"| {repository.Name} | {repository.HtmlUrl} |");
+            _outputPresenter.Present(
+                $"| {repository.Name} "
+                    + $"| {repository.PushedAt.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)} "
+                    + $"| {repository.Description} "
+                    + $"| {repository.HtmlUrl} "
+                    + $"| {repository.SshUrl} "
+                    + $"| {repository.CloneUrl} |"
+            );
         }
     }
 

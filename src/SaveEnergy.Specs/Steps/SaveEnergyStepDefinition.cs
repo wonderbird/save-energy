@@ -1,8 +1,10 @@
-﻿using FluentAssertions;
+﻿using System.Globalization;
+using FluentAssertions;
+using Meziantou.Extensions.Logging.Xunit;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SaveEnergy.Domain;
 using SaveEnergy.Specs.Hooks;
-using TestProcessWrapper;
-using Xunit;
+using SaveEnergy.TestHelpers;
 using Xunit.Sdk;
 
 namespace SaveEnergy.Specs.Steps;
@@ -10,9 +12,13 @@ namespace SaveEnergy.Specs.Steps;
 [Binding]
 public sealed class SaveEnergyStepDefinition : IDisposable
 {
+    private const int ExpectedColumnsInResultTable = 6;
+
     private readonly TestOutputHelper _testOutputHelper;
     private readonly MockServer _mockServer;
-    private TestProcessWrapper.TestProcessWrapper? _process;
+    private readonly TestOutputPresenter _testOutputPresenter;
+    private readonly IHost _host;
+
     private bool _isDisposed;
 
     public SaveEnergyStepDefinition(
@@ -23,6 +29,33 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     {
         _testOutputHelper = testOutputHelper;
         _mockServer = mockServer;
+        _testOutputPresenter = new TestOutputPresenter(_testOutputHelper);
+
+        _host = CreateApplicationHost();
+    }
+
+    private IHost CreateApplicationHost()
+    {
+        var builder = Program.CreateApplicationBuilder([]);
+        builder
+            .Services.RemoveAll(typeof(ICanPresentOutput))
+            .AddSingleton<ICanPresentOutput>(_testOutputPresenter);
+
+        builder.Configuration.AddInMemoryCollection(
+            [
+                new KeyValuePair<string, string?>(
+                    "GitHub:AuthenticationBaseAddress",
+                    _mockServer.Url
+                ),
+                new KeyValuePair<string, string?>("GitHub:ApiBaseAddress", _mockServer.Url)
+            ]
+        );
+
+        builder.Logging.ClearProviders().AddProvider(new XUnitLoggerProvider(_testOutputHelper));
+
+        builder.Environment.EnvironmentName = "Test";
+
+        return builder.Build();
     }
 
     ~SaveEnergyStepDefinition()
@@ -40,7 +73,7 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     {
         if (!_isDisposed && disposing)
         {
-            _process?.Dispose();
+            _host.Dispose();
         }
 
         _isDisposed = true;
@@ -55,19 +88,10 @@ public sealed class SaveEnergyStepDefinition : IDisposable
     [Given("the user owns the following repositories")]
     public void GivenTheUserOwnsTheFollowingRepositories(Table table)
     {
+        TableShouldMatchExpectedFormat(table.Header.Count);
+
         var repositories = table.CreateSet<Repository>();
         _mockServer.ConfigureRepositories(repositories);
-    }
-
-    [Given("the user owns a repository")]
-    public void GivenTheUserOwnsARepository()
-    {
-        _mockServer.ConfigureRepositories(
-            new List<Repository>
-            {
-                new() { Name = "SaveEnergy", HtmlUrl = "https://github.com/wonderbird/save-energy" }
-            }
-        );
     }
 
     [Given("the GitHub API returns internal errors")]
@@ -76,37 +100,32 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _mockServer.ConfigureInternalServerError();
     }
 
-    [When("I run the application")]
-    public void WhenIRunTheApplication()
+    [When(@"I run the application")]
+    public async Task WhenIRunTheApplication()
     {
-#if DEBUG
-        const BuildConfiguration buildConfiguration = BuildConfiguration.Debug;
-#else
-        const BuildConfiguration buildConfiguration = BuildConfiguration.Release;
-#endif
-        _process = new TestProcessWrapper.TestProcessWrapper(
-            "SaveEnergy",
-            true,
-            buildConfiguration
-        );
-        _process.TestOutputHelper = _testOutputHelper;
-
-        _process.AddEnvironmentVariable("GitHub__AuthenticationBaseAddress", _mockServer.Url);
-        _process.AddEnvironmentVariable("GitHub__ApiBaseAddress", _mockServer.Url);
-
-        _process.Start();
-        _process.WaitForProcessExit();
-        _process.ForceTermination();
-
-        _testOutputHelper.WriteLine("===== Recorded process output =====");
-        _testOutputHelper.WriteLine(_process.RecordedOutput);
-        _testOutputHelper.WriteLine("===== End of recorded process output =====");
+        await _host.RunAsync();
     }
 
-    [Then("at least one repository URL is printed to the console")]
-    public void ThenAtLeastOneRepositoryUrlIsPrintedToTheConsole()
+    [Then("the following repositories table is printed to the console")]
+    public void ThenTheFollowingRepositoriesTableIsPrintedToTheConsole(Table table)
     {
-        Assert.Contains("https://github.com/", _process?.RecordedOutput);
+        TableShouldMatchExpectedFormat(table.Header.Count);
+
+        var expectedRepositories = table.CreateSet<Repository>().ToList();
+
+        LogRepositoriesWithMessage(expectedRepositories, "Repositories expected in output:");
+
+        const char tableIdentifier = '|';
+        const int headerAndSeparator = 2;
+
+        var actualRepositories = _testOutputPresenter
+            .RecordedOutput.Where(r => r.StartsWith(tableIdentifier))
+            .Skip(headerAndSeparator)
+            .Select(ParseRepositoryFromTableRow);
+
+        LogRepositoriesWithMessage(actualRepositories, "Repositories parsed from output:");
+
+        actualRepositories.Should().Equal(expectedRepositories);
     }
 
     [Then("it performs the device authorization flow")]
@@ -115,63 +134,63 @@ public sealed class SaveEnergyStepDefinition : IDisposable
         _mockServer.VerifyDeviceAuthorizationFlow();
     }
 
-    /// <summary>Identify table of repositories in the recorded output</summary>
-    ///
-    /// <remarks>
-    /// The shape of the output is:
-    ///
-    /// <code>
-    /// ... some text ...
-    /// | Repository name | URL |
-    /// | --- | --- |
-    /// | repo1 | https://github.com/... |
-    /// | repo2 | https://github.com/... |
-    /// ... some text ...
-    /// +------------+------+--------+--------+
-    /// | Module     | Line | Branch | Method |
-    /// +------------+------+--------+--------+
-    /// | SaveEnergy | 100% | 75%    | 100%   |
-    /// +------------+------+--------+--------+
-    /// ... some text ...
-    /// </code>
-    ///
-    /// The second table is the code coverage report, which we want to ignore.
-    /// In this case, we want to identify the rows of repo1 and repo2
-    /// </remarks>
-    [Then("(.*) repository URLs are printed to the console")]
-    public void ThenRepositoryUrLsArePrintedToTheConsole(int count)
-    {
-        var outputRows = _process?.RecordedOutput.Split('\n') ?? [];
-        var tableStartIndex = Array.IndexOf(outputRows, "| Repository name | URL |");
-        var tableBodyStartIndex = tableStartIndex + 2;
-        var numberOfRepositories = 0;
-        var isTableBody = true;
-
-        _testOutputHelper.WriteLine(
-            $"Verifying that {count} repositories were printed to the console. We found:"
-        );
-        while (tableStartIndex != -1 && isTableBody)
-        {
-            isTableBody = outputRows[tableBodyStartIndex + numberOfRepositories].StartsWith('|');
-            if (isTableBody)
-            {
-                _testOutputHelper.WriteLine(
-                    $"{outputRows[tableBodyStartIndex + numberOfRepositories]}"
-                );
-                numberOfRepositories++;
-            }
-        }
-
-        numberOfRepositories.Should().Be(count);
-    }
-
     [Then("it reports the error to the user")]
     public void ThenItReportsTheErrorToTheUser()
     {
-        _process
-            ?.RecordedOutput.Should()
+        _testOutputPresenter
+            .RecordedOutput.Should()
             .Contain(
                 "An error prevents executing the command. Please check the logs for more information."
             );
+    }
+
+    private void LogRepositoriesWithMessage(
+        IEnumerable<Repository> expectedRepositories,
+        string message
+    )
+    {
+        _testOutputHelper.WriteLine(message);
+        foreach (var repository in expectedRepositories)
+        {
+            _testOutputHelper.WriteLine(repository.ToString());
+        }
+    }
+
+    private static void TableShouldMatchExpectedFormat(int numberOfColumns)
+    {
+        numberOfColumns
+            .Should()
+            .Be(
+                ExpectedColumnsInResultTable,
+                $"this function handles only specification tables with {{ExpectedColumnsInResultTable}} columns"
+            );
+    }
+
+    private static Repository ParseRepositoryFromTableRow(string outputRow)
+    {
+        var columns = outputRow.Split('|').Select(c => c.Trim()).ToList();
+        columns = columns.Skip(1).Take(columns.Count - 2).ToList();
+
+        TableShouldMatchExpectedFormat(columns.Count);
+
+        const int nameColumn = 0;
+        const int pushedAtColumn = 1;
+        const int descriptionColumn = 2;
+        const int htmlUrlColumn = 3;
+        const int sshUrlColumn = 4;
+        const int cloneUrlColumn = 5;
+
+        return new Repository(
+            columns[nameColumn],
+            DateTime.Parse(
+                columns[pushedAtColumn],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind
+            ),
+            columns[descriptionColumn],
+            columns[htmlUrlColumn],
+            columns[sshUrlColumn],
+            columns[cloneUrlColumn]
+        );
     }
 }
