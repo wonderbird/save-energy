@@ -57,7 +57,6 @@ jobs:
     #
     # This avoids exposing the secrets to attackers who debug print the
     # secrets during the pull request verification build.
-
     if: github.ref == 'refs/heads/main'
         
     steps:
