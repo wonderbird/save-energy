@@ -42,6 +42,8 @@ Accept: application/json
     client.global.set("refresh_token", response.body.refresh_token);
 %}
 
+### ********************** Read repository information ***********************
+
 ### GET /user/repos
 # List all repositories for the authenticated user.
 #
@@ -64,34 +66,28 @@ GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=de
 Accept: application/json
 Authorization: Bearer {{access_token}}
 
-# ************************* Authorization Required  **************************
+# ************************ Read workflow information *************************
 
-### GET /emojis
-# List all emojis available to use on GitHub.
-#
-# This API call is used as a simple test for the GitHub API.
-GET https://api.github.com/emojis
+### GET /repos/{owner}/{repo}/actions/workflows
+# Lists the workflows in a repository.
+GET https://api.github.com/repos/wonderbird/save-energy/actions/workflows
 Accept: application/json
-Authorization: Bearer {{$auth.token("github")}}
+Authorization: Bearer {{access_token}}
 
-### GET /user/repos
-# List all repositories for the authenticated user.
-#
-# Only repositories owned by the authenticated user are listed.
-# Get 100 repositories sorted by the date of the last push.
-# The oldest repositories are listed first.
-GET https://api.github.com/user/repos?affiliation=owner&sort=pushed&direction=asc&per_page=100&page=1
+### GET /repos/{owner}/{repo}/actions/runs
+# Lists all workflow runs for a repository.
+GET https://api.github.com/repos/wonderbird/save-energy/actions/runs
 Accept: application/json
-Authorization: Bearer {{$auth.token("github")}}
+Authorization: Bearer {{access_token}}
 
-### GET /users/{{GitHub.Username}}/orgs
-# List all organizations for the specified user.
-GET https://api.github.com/users/{{GitHub.Username}}/orgs
+### GET /repos/{owner}/{repo}/actions/runs/{run_id}/timing
+# Gets the number of billable minutes and total run time for a specific workflow run.
+GET https://api.github.com/repos/wonderbird/save-energy/actions/runs/12025439877/timing
 Accept: application/json
-Authorization: Bearer {{$auth.token("github")}}
+Authorization: Bearer {{access_token}}
 
-### GET /orgs/{{GitHub.Organization}}/repos
-# List all repositories for the specified organization.
-GET https://api.github.com/orgs/{{GitHub.Organization}}/repos
+### GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/timing
+# Gets the number of billable minutes used by a specific workflow during the current billing cycle.
+GET https://api.github.com/repos/wonderbird/save-energy/actions/workflows/112117966/timing
 Accept: application/json
-Authorization: Bearer {{$auth.token("github")}}
+Authorization: Bearer {{access_token}}
