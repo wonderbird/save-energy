@@ -16,4 +16,4 @@ The project is currently **blocked**. The CI build on the `main` branch is faili
 
 ## Known Issues
 
--   The `paambaati/codeclimate-action@v9.0.0` in the GitHub Actions workflow is failing due to a `404` error when attempting to download the test reporter.
+-   The `paambaati/codeclimate-action@v9.0.0` in the GitHub Actions workflow is failing. This action has been deprecated and must be replaced. The failure is due to a `404` error when attempting to download the now-unavailable test reporter.
