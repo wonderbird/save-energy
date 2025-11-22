@@ -79,3 +79,5 @@ jobs:
           oidc: true
           files: coverage-reports/lcov.info
           format: lcov
+          skip-errors: false
+
