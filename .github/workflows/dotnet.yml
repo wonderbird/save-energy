@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -68,10 +72,10 @@ jobs:
         with:
           name: coverage-reports
           path: coverage-reports
-          
-      - name: Publish coverage report to CodeClimate
-        uses: paambaati/codeclimate-action@v9.0.0
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+
+      - name: Publish coverage report to qlty.sh
+        uses: qltysh/qlty-action/coverage@v2
         with:
-          coverageLocations: coverage-reports/lcov.info:lcov
+          oidc: true
+          files: lcov.info
+          format: lcov
