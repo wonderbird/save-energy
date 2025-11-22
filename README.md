@@ -1,7 +1,7 @@
 # Save Energy
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/a73e183c51a4686a9969/maintainability)](https://codeclimate.com/github/wonderbird/save-energy/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/a73e183c51a4686a9969/test_coverage)](https://codeclimate.com/github/wonderbird/save-energy/test_coverage)
+[![Maintainability](https://qlty.sh/gh/wonderbird/projects/save-energy/maintainability.svg)](https://qlty.sh/gh/wonderbird/projects/save-energy)
+[![Code Coverage](https://qlty.sh/gh/wonderbird/projects/save-energy/coverage.svg)](https://qlty.sh/gh/wonderbird/projects/save-energy)
 
 Reduce your carbon footprint by saving energy on GitHub.
 
